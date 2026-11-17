@@ -1,0 +1,41 @@
+{
+  "run_tag": "Kidney__u1_up64_only_d192__0shot_halfOD",
+  "fold": "Kidney",
+  "arch": "u1_up64_only",
+  "dim": 192,
+  "stage": "0shot_halfOD",
+  "strategy": "halfOD",
+  "k_shot": 5,
+  "eval_n": 120,
+  "config_hash": "9b088433fba3",
+  "split_hash": "8c810bd4fe78",
+  "sparse_bg_lap": 8.4405,
+  "gt_bg_lap": 10.7549,
+  "trainable_params_m": 1.7888,
+  "latency_bs1_ms": 26.93,
+  "wall_seconds": 2.1,
+  "metrics": {
+    "psnr": 19.43251687245664,
+    "ssim": 0.7764847268660863,
+    "lpips": 0.19156692810356618,
+    "fid": 78.6043472290039,
+    "kid": 0.04210783913731575,
+    "nuclei_dice": 0.6896583889921506,
+    "nuclei_f1_05": 0.707720665455089,
+    "nuclei_dice_nonempty": 0.6896583889921506,
+    "nuclei_f1_05_nonempty": 0.707720665455089,
+    "empty_gt_count": 0,
+    "pcc_gt": 0.9343795418739319,
+    "pcc_pi": 0.8585314368208249,
+    "nuclei_count_r": 0.8078107169717375
+  },
+  "paper_core_keys": [
+    "psnr",
+    "ssim",
+    "lpips",
+    "kid",
+    "nuclei_dice",
+    "nuclei_f1_05"
+  ],
+  "timestamp": "2026-11-16T23:33:05.253137"
+}

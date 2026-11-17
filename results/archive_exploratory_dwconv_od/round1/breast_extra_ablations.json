@@ -1,0 +1,251 @@
+{
+  "steps_ablation": {
+    "S=1": {
+      "latency_ms": 20.04,
+      "0shot": {
+        "psnr": 15.33,
+        "ssim": 0.7429,
+        "lpips": 0.2752,
+        "kid_x1e3": 45.2,
+        "dice": 0.4932,
+        "f1": 0.4956,
+        "bg_lap": 4.55
+      },
+      "20shot": {
+        "psnr": 23.71,
+        "ssim": 0.8196,
+        "lpips": 0.1659,
+        "kid_x1e3": 12.79,
+        "dice": 0.5439,
+        "f1": 0.5421,
+        "bg_lap": 1.7
+      }
+    },
+    "S=2": {
+      "latency_ms": 26.06,
+      "0shot": {
+        "psnr": 15.12,
+        "ssim": 0.7352,
+        "lpips": 0.2647,
+        "kid_x1e3": 41.25,
+        "dice": 0.4937,
+        "f1": 0.4982,
+        "bg_lap": 4.5
+      },
+      "20shot": {
+        "psnr": 23.86,
+        "ssim": 0.8244,
+        "lpips": 0.1581,
+        "kid_x1e3": 9.53,
+        "dice": 0.5531,
+        "f1": 0.5564,
+        "bg_lap": 1.72
+      }
+    },
+    "S=4": {
+      "latency_ms": 35.12,
+      "0shot": {
+        "psnr": 15.06,
+        "ssim": 0.7277,
+        "lpips": 0.2609,
+        "kid_x1e3": 40.63,
+        "dice": 0.5024,
+        "f1": 0.5081,
+        "bg_lap": 4.57
+      },
+      "20shot": {
+        "psnr": 23.87,
+        "ssim": 0.8246,
+        "lpips": 0.1562,
+        "kid_x1e3": 8.62,
+        "dice": 0.5564,
+        "f1": 0.5589,
+        "bg_lap": 1.77
+      }
+    },
+    "S=8": {
+      "latency_ms": 44.96,
+      "0shot": {
+        "psnr": 15.06,
+        "ssim": 0.7219,
+        "lpips": 0.2594,
+        "kid_x1e3": 40.72,
+        "dice": 0.5084,
+        "f1": 0.5135,
+        "bg_lap": 4.67
+      },
+      "20shot": {
+        "psnr": 23.79,
+        "ssim": 0.8245,
+        "lpips": 0.1561,
+        "kid_x1e3": 8.79,
+        "dice": 0.5522,
+        "f1": 0.5558,
+        "bg_lap": 1.79
+      }
+    },
+    "S=16": {
+      "latency_ms": 73.26,
+      "0shot": {
+        "psnr": 15.01,
+        "ssim": 0.7176,
+        "lpips": 0.2605,
+        "kid_x1e3": 41.11,
+        "dice": 0.5107,
+        "f1": 0.5179,
+        "bg_lap": 4.75
+      },
+      "20shot": {
+        "psnr": 23.72,
+        "ssim": 0.8238,
+        "lpips": 0.1566,
+        "kid_x1e3": 8.86,
+        "dice": 0.5508,
+        "f1": 0.554,
+        "bg_lap": 1.81
+      }
+    }
+  },
+  "oasra_components": {
+    "NaiveFT+SWA+Jitter": {
+      "target": {
+        "psnr": 24.08,
+        "ssim": 0.8258,
+        "lpips": 0.1559,
+        "kid_x1e3": 8.91,
+        "dice": 0.5675,
+        "f1": 0.5755,
+        "bg_lap": 1.77,
+        "fft_16px": 5.06,
+        "fft_harm": 3.64
+      },
+      "source_val": {
+        "src_psnr": 15.73,
+        "src_lpips": 0.2574,
+        "src_dice": 0.6872
+      }
+    },
+    "OASRA_wo_LOD": {
+      "target": {
+        "psnr": 23.86,
+        "ssim": 0.8245,
+        "lpips": 0.1562,
+        "kid_x1e3": 8.78,
+        "dice": 0.5553,
+        "f1": 0.5583,
+        "bg_lap": 1.77,
+        "fft_16px": 4.98,
+        "fft_harm": 3.51
+      },
+      "source_val": {
+        "src_psnr": 19.76,
+        "src_lpips": 0.1847,
+        "src_dice": 0.7234
+      }
+    },
+    "OASRA_wo_Replay": {
+      "target": {
+        "psnr": 24.1,
+        "ssim": 0.8258,
+        "lpips": 0.156,
+        "kid_x1e3": 8.82,
+        "dice": 0.5672,
+        "f1": 0.5723,
+        "bg_lap": 1.76,
+        "fft_16px": 4.99,
+        "fft_harm": 3.6
+      },
+      "source_val": {
+        "src_psnr": 15.69,
+        "src_lpips": 0.2593,
+        "src_dice": 0.6869
+      }
+    }
+  },
+  "dwconv_ablation": {
+    "0shot": {
+      "psnr": 14.98,
+      "ssim": 0.7247,
+      "lpips": 0.264,
+      "kid_x1e3": 42.81,
+      "dice": 0.5109,
+      "f1": 0.5192,
+      "bg_lap": 4.07,
+      "fft_16px": 5.39,
+      "fft_harm": 4.14
+    },
+    "20shot": {
+      "psnr": 24.06,
+      "ssim": 0.8256,
+      "lpips": 0.1544,
+      "kid_x1e3": 8.23,
+      "dice": 0.5611,
+      "f1": 0.5626,
+      "bg_lap": 1.87,
+      "fft_16px": 4.73,
+      "fft_harm": 3.28
+    }
+  },
+  "seed_variance": {
+    "BaseFlow": {
+      "seed_8202": {
+        "psnr": 23.02,
+        "ssim": 0.8147,
+        "lpips": 0.1727,
+        "kid_x1e3": 10.87,
+        "dice": 0.5517,
+        "f1": 0.5552,
+        "bg_lap": 1.68
+      },
+      "seed_9202": {
+        "psnr": 23.08,
+        "ssim": 0.815,
+        "lpips": 0.1725,
+        "kid_x1e3": 10.81,
+        "dice": 0.5478,
+        "f1": 0.5506,
+        "bg_lap": 1.64
+      }
+    },
+    "NaiveFT": {
+      "seed_8202": {
+        "psnr": 23.61,
+        "ssim": 0.8167,
+        "lpips": 0.1628,
+        "kid_x1e3": 10.97,
+        "dice": 0.5571,
+        "f1": 0.5578,
+        "bg_lap": 2.05
+      },
+      "seed_9202": {
+        "psnr": 23.65,
+        "ssim": 0.8183,
+        "lpips": 0.1628,
+        "kid_x1e3": 12.39,
+        "dice": 0.5564,
+        "f1": 0.5606,
+        "bg_lap": 1.99
+      }
+    },
+    "OASRA": {
+      "seed_8202": {
+        "psnr": 23.86,
+        "ssim": 0.8245,
+        "lpips": 0.1562,
+        "kid_x1e3": 8.72,
+        "dice": 0.5563,
+        "f1": 0.5587,
+        "bg_lap": 1.77
+      },
+      "seed_9202": {
+        "psnr": 23.86,
+        "ssim": 0.8243,
+        "lpips": 0.1564,
+        "kid_x1e3": 8.67,
+        "dice": 0.5548,
+        "f1": 0.5582,
+        "bg_lap": 1.78
+      }
+    }
+  }
+}

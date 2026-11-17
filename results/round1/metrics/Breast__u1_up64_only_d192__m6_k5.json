@@ -7,27 +7,27 @@
   "strategy": "m6",
   "k_shot": 5,
   "eval_n": 120,
-  "config_hash": "d309c316a58c",
-  "split_hash": "9dc987370bef",
-  "sparse_bg_lap": 2.1936,
+  "config_hash": "ea521e29bb0f",
+  "split_hash": "0ab70809c409",
+  "sparse_bg_lap": 2.2343,
   "gt_bg_lap": 2.863,
-  "trainable_params_m": 1.898,
-  "latency_bs1_ms": 30.21,
-  "wall_seconds": 271.49,
+  "trainable_params_m": 1.897,
+  "latency_bs1_ms": 29.09,
+  "wall_seconds": 231.13,
   "metrics": {
-    "psnr": 21.338572178473875,
-    "ssim": 0.7916194180647532,
-    "lpips": 0.19178104350964228,
-    "fid": 85.35376739501953,
-    "kid": 0.02625637874007225,
-    "nuclei_dice": 0.5522855185593168,
-    "nuclei_f1_05": 0.5591587430021014,
-    "nuclei_dice_nonempty": 0.5713298467855001,
-    "nuclei_f1_05_nonempty": 0.5784400789676912,
+    "psnr": 21.39828396292002,
+    "ssim": 0.7924949650963148,
+    "lpips": 0.19447960120936233,
+    "fid": 85.66714477539062,
+    "kid": 0.026611696928739548,
+    "nuclei_dice": 0.5524297418538481,
+    "nuclei_f1_05": 0.5582358754047523,
+    "nuclei_dice_nonempty": 0.5714790432970842,
+    "nuclei_f1_05_nonempty": 0.5774853883497437,
     "empty_gt_count": 4,
-    "pcc_gt": 0.8911715403199196,
-    "pcc_pi": 0.9056972369551659,
-    "nuclei_count_r": 0.7709304600650507
+    "pcc_gt": 0.8902568886677424,
+    "pcc_pi": 0.9075155759851138,
+    "nuclei_count_r": 0.7692869259791412
   },
   "paper_core_keys": [
     "psnr",
@@ -37,5 +37,5 @@
     "nuclei_dice",
     "nuclei_f1_05"
   ],
-  "timestamp": "2026-11-16T22:46:25.240631"
+  "timestamp": "2026-11-18T00:12:54.644995"
 }

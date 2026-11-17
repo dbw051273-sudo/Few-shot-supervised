@@ -338,6 +338,7 @@ def main() -> None:
     ap.add_argument('--codec-noise-max', type=float, default=0.08, help='RAE Codec latent noise max fraction of batch std (default: 0.08)')
     ap.add_argument('--decoder-lr-mult', type=float, default=0.1, help='Codec decoder LR multiplier vs Flow in adapt (default: 0.1)')
     ap.add_argument('--rollout-steps', type=int, default=4, help='Locked Euler NFE steps for inference and adapt rollout (default: 4)')
+    ap.add_argument('--od-weight', type=float, default=0.0, help='Optional exploratory Beer-Lambert OD anchor loss weight (default: 0.0, disabled in SRA)')
     ap.add_argument('--use_on_policy_rollout', action='store_true', default=False, help='Ablation switch: add N-step on-policy rollout loss in pretrain second half')
     args = ap.parse_args()
 
@@ -697,6 +698,7 @@ def main() -> None:
                 fold_ctx['organ_pools'], fd_k['adapt_pi_t'], fd_k['adapt_he_t'],
                 lpips_fn, uni_enc, steps=job['adapt_steps'], batch=job['batch_ad'], seed=7202,
                 decoder_lr_mult=args.decoder_lr_mult, rollout_steps=args.rollout_steps,
+                od_weight=args.od_weight,
             )
             torch.save(
                 {

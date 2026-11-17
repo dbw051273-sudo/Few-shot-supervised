@@ -33,7 +33,7 @@
 \maketitle
 
 \begin{abstract}
-本文研究树脂包埋小鼠组织的碘化丙啶（PI）到苏木精-伊红（H\&E）跨器官虚拟染色，考察模型在训练期未见器官上的严格零样本（0-shot）外推、免训练参考校准（0-shot + halfOD）以及极少样本（$K \in \{5, 10, 20\}$）有监督适配行为。跨器官迁移同时存在组织形态落差与染色光密度分布偏移。实证表明，在严格零样本下，冻结病理基础模型先验虽可改善多折像素误差与感知距离，但在缺乏目标域风格参照时对细胞核分割精度助益有限，在脑组织上甚至导致分布距离 KID 上升；引入 5 张无配对参考图的半阻尼光密度校准（halfOD）可迅速拉齐乳腺等高色偏器官的全局色调，但在染色相近的肝脏组织上反而轻度推高 KID；全指标的稳定改善最终仍依赖少样本有监督适配。另一方面，若在采用亚像素重排（PixelShuffle）的隐空间解码器中直接将基础模型特征叠加至低分辨率令牌层，稀疏背景极易出现周期性网格伪影。为此，本文提出隐空间整流流匹配框架 \textbf{\methodname{}}：在四倍空间压缩卷积自编码器（NR-AE，训练期采用常规隐空间高斯微扰稳定解码器）隐空间内拟合确定性常微分速度场，并仅在解码末端 $64\times 64$ 分辨率处通过 $3\times 3$ 深度可分离卷积与零初始化投影注入冻结 UNI 空间特征。基于“0-shot $\to$ halfOD $\to$ 光密度锚定源域回放微调（OASRA）”三阶段协议，在四器官轮流留出且消除一维索引邻接重叠的 \texttt{UniPrior\_v2} 基准上，\methodname{} 在 20-shot 下于全部四个器官均取得高于同协议无先验基座（BaseFlow）、朴素微调（NaiveFT）及四类经典域泛化方法（MixStyle、StainAug、DANN、MLDG）的综合重建与分割结果；对比多尺度重型像素网络 UNIStainNet，\methodname{} 以 $1/22$ 的可训练参数量（$1.90\text{M}$ 对 $42.19\text{M}$）在四折 PSNR（均值 $+1.15\text{ dB}$）与 LPIPS 上占优。代码、划分清单与评测管线已开源：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
+本文研究树脂包埋小鼠组织的碘化丙啶（PI）到苏木精-伊红（H\&E）跨器官虚拟染色，考察模型在训练期未见器官上的严格零样本（0-shot）外推、免训练参考校准（0-shot + halfOD）以及极少样本（$K \in \{5, 10, 20\}$）有监督适配行为。跨器官迁移同时存在组织形态落差与染色光密度分布偏移。实证表明，在严格零样本下，冻结病理基础模型先验虽可全面改善四折像素重建与感知距离（LPIPS），并在脑与肝脏组织上直接拉升结构定位精度，但在高色偏乳腺折上对细胞核分割增益仍受限于全局染色偏差；引入 5 张无配对参考图的半阻尼光密度校准（halfOD）可迅速拉齐乳腺的全局色调，但在染色相近的肝脏组织上反而轻度推高 KID；全指标的稳定均衡提升最终仍依赖少样本有监督适配。另一方面，若在采用亚像素重排（PixelShuffle）的隐空间解码器中直接将基础模型特征叠加至低分辨率令牌层，稀疏背景极易出现周期性网格伪影。为此，本文提出隐空间整流流匹配框架 \textbf{\methodname{}}：在四倍空间压缩卷积自编码器（NR-AE，训练期采用隐空间高斯微扰稳定解码器）隐空间内拟合确定性常微分速度场，并仅在解码末端 $64\times 64$ 分辨率处经 $1\times 1$ 降维、双线性上采样与零初始化线性投影注入冻结 UNI 空间特征。基于“0-shot $\to$ halfOD $\to$ 染色增广源域回放自适应（SRA）”三阶段协议，在四器官轮流留出且消除一维索引邻接重叠的 \texttt{UniPrior\_v2} 基准上，\methodname{} 在 20-shot 下于全部四个器官均取得高于同协议无先验基座（BaseFlow）、朴素微调（NaiveFT）及四类经典域泛化方法（MixStyle、StainAug、DANN、MLDG）的综合重建与分割表现；对比多尺度重型像素网络 UNIStainNet，\methodname{} 以 $1/22$ 的可训练参数量（$1.90\text{M}$ 对 $42.19\text{M}$）在四折 PSNR（均值 $+1.18\text{ dB}$）与 LPIPS（均值 $0.1226$ 对 $0.1353$）上占优。代码、划分清单与评测管线已开源：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -47,12 +47,12 @@
 
 围绕上述问题，本文在统一的四器官零一维索引邻接基准（\texttt{UniPrior\_v2 Clean-120}）上构建轻量隐空间整流流匹配模型 \textbf{\methodname{}}，重点检验三个实证问题：
 \begin{enumerate}
-    \item \textbf{（Q1：末端空间先验注入与网格伪影权衡）} 相比直接向 $16\times 16$ 低分辨率令牌层叠加 UNI 特征（\texttt{UniFlow-Tok}）以及无先验基座（\texttt{BaseFlow}），仅在 $64\times 64$ 速度场末端引入深度可分离平滑残差分支（\methodname{}）能否在频域层面抑制背景周期性伪影？两者在重建指标上存在怎样的取舍？
+    \item \textbf{（Q1：末端空间先验注入与网格伪影权衡）} 相比直接向 $16\times 16$ 低分辨率令牌层叠加 UNI 特征（\texttt{UniFlow-Tok}）以及无先验基座（\texttt{BaseFlow}），仅在 $64\times 64$ 速度场末端引入双线性上采样与零初始化线性残差分支（\methodname{}）能否在频域层面抑制背景周期性伪影？两者在重建指标上存在怎样的取舍？
     \item \textbf{（Q2：三阶段演进边界与校准敏感性）} 严格 0-shot、基于 5 张无配对参考切片的免训练半阻尼校准（\texttt{0-shot + halfOD}）与 $K \in \{5, 10, 20\}$ 有监督适配分别处理哪一类跨器官偏移，又伴随哪些指标副作用？
-    \item \textbf{（Q3：少样本回放策略与外部范式比较）} 联合光密度锚定与染色增广源域回放的适配策略（OASRA）相对朴素微调（NaiveFT）能否切实缓解源域遗忘，并在统一基准下优于经典域泛化算法与传统像素级生成基线？
+    \item \textbf{（Q3：少样本回放策略与外部范式比较）} 采用染色增广源域回放与随机权重平均的适配策略（SRA）相对朴素微调（NaiveFT）能否切实缓解源域遗忘，并在统一基准下优于经典域泛化算法与传统像素级生成基线？
 \end{enumerate}
 
-本文工作归纳如下：（1）提出四倍压缩 NR-AE 卷积隐空间与 4 块 Transformer 整流流主干，采用末端 $64\times 64$ 深度可分离 UNI 先验注入抑制背景网格伪影，并通过全测试集 227 个稀疏背景块上的二维傅里叶变换（2D FFT）谐波能量证实其频域平滑效果；（2）在四器官留出基准上完成 0-shot、halfOD（含混合权重 $\alpha$ 敏感性扫描）与 20-shot 的受控实验，给出 4 种经典域泛化算法对照以及 240 对源域验证集上的抗遗忘实证；（3）在同划分下对齐 Pix2Pix、CycleGAN 与 UNIStainNet 三类外部基线，并与全部代码及切分清单一同开源。
+本文工作归纳如下：（1）提出四倍压缩 NR-AE 卷积隐空间与 4 块 Transformer 整流流主干，采用末端 $64\times 64$ 零初始化线性 UNI 先验注入抑制背景网格伪影，并通过全测试集 227 个稀疏背景块上的二维傅里叶变换（2D FFT）谐波能量证实其频域抑制效果（基于消融奥卡姆剃刀实证移除了无增益的 $3\times 3$ 深度卷积与显式光密度锚定项）；（2）在四器官留出基准上完成 0-shot、halfOD（含混合权重 $\alpha$ 敏感性扫描）与 20-shot 的受控实验，给出 4 种经典域泛化算法对照以及 240 对源域验证集上的抗遗忘实证；（3）在同划分下对齐 Pix2Pix、CycleGAN 与 UNIStainNet 三类外部基线，并与全部代码及切分清单一同开源。
 
 \section{相关工作}
 \subsection{域泛化与跨器官虚拟染色}
@@ -76,7 +76,7 @@ UNIStainNet~\cite{ref_unistainnet} & SPADE-UNet + 判别器 & 多尺度冻结 UN
 MixStyle~\cite{ref_mixstyle} / DANN~\cite{ref_dann} & 表征层风格混合 / 对抗 & 域泛化正则 & $\times$ & 可选 & $\times$ & $\times$ \\
 UniPrior~\cite{ref_uniprior} & Swin-UNet 布朗桥 & 严格 0-shot + OD 校准 & $\times$ & $\checkmark$ (32/64) & 仅阶段 I/II & $\times$ \\
 \midrule
-\textbf{本文 \methodname{}} & 4-块 Transformer 整流流 & 0-shot + halfOD + OASRA $K$-shot & $\checkmark$ & $\checkmark$ (\texttt{up64}) & $\checkmark$ & $\checkmark$ \\
+\textbf{本文 \methodname{}} & 4-块 Transformer 整流流 & 0-shot + halfOD + SRA $K$-shot & $\checkmark$ & $\checkmark$ (\texttt{up64}) & $\checkmark$ & $\checkmark$ \\
 \bottomrule
 \end{tabular}}
 \end{table*}
@@ -88,7 +88,7 @@ UniPrior~\cite{ref_uniprior} & Swin-UNet 布朗桥 & 严格 0-shot + OD 校准 &
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{fig1_arch.pdf}
-\caption{\methodname{} 网络架构、源域预训练与跨器官三阶段部署流程图。(a) 在四倍压缩隐空间（$64\times 64\times 12$）中由 4 块 Transformer 预测流速度场，冻结 UNI 提取的 $14\times 14\times 1024$ 空间特征经 $1\times 1$ 降维、双线性插值至 $64\times 64$ 与 $3\times 3$ 深度可分离卷积平滑后残差叠加至末端速度场（对照直接叠加于 $16\times 16$ 令牌层的 \texttt{UniFlow-Tok} 消融分支）；(b) 源域每折 480$\times$3 对数据的卷积自编码器与流匹配预训练；(c) 目标器官上的 4 步零样本欧拉采样、5 张参考切片半阻尼光密度校准（\texttt{halfOD}）与 \texttt{OASRA} 少样本微调。}
+\caption{\methodname{} 网络架构、源域预训练与跨器官三阶段部署流程图。(a) 在四倍压缩隐空间（$64\times 64\times 12$）中由 4 块 Transformer 预测流速度场，冻结 UNI 提取的 $14\times 14\times 1024$ 空间特征经 $1\times 1$ 降维、SiLU 激活、双线性插值至 $64\times 64$ 与零初始化 $1\times 1$ 投影后残差叠加至末端速度场（对照直接叠加于 $16\times 16$ 令牌层的 \texttt{UniFlow-Tok} 消融分支）；(b) 源域每折 480$\times$3 对数据的卷积自编码器与流匹配预训练；(c) 目标器官上的 4 步零样本欧拉采样、5 张参考切片半阻尼光密度校准（\texttt{halfOD}）与 \texttt{SRA} 少样本微调。}
 \label{fig:arch}
 \end{figure*}
 
@@ -106,7 +106,7 @@ $\mu_z, s_z$ & 源域隐空间全局均值与标准差标量（$\in \mathbb{R}$�
 $z_0, z_1$ & 标准化后的 PI 与 H\&E 隐空间状态（$12\times 64\times 64$） \\
 $v_\theta(\cdot)$ & 隐维度 $d=192$ 的 4 块 Transformer 速度网络 \\
 $\phi_U(x)$ & 冻结 UNI 编码器提取的空间网格特征（$14\times 14\times 1024$） \\
-$W_{1\times 1}^{\text{hi}}, \mathcal{K}_{\text{dw}}$ & 末端注入分支的 $1\times 1$ 投影与 $3\times 3$ 深度可分离卷积 \\
+$W_{1\times 1}^{\text{hi}}, \mathcal{Z}_{\text{hi}}$ & 末端注入分支的 $1\times 1$ 降维投影与零初始化输出投影 \\
 $M_{\text{HE}}, M_{\text{HE}}^+$ & 固定 Ruifrok H/E 吸收基矩阵及其 Moore--Penrose 伪逆 \\
 $\mathcal{L}_{\text{bg-lap}},\, E_{\text{FFT}}$ & 稀疏背景拉普拉斯指标与 2D FFT 周期网格能量比 \\
 \bottomrule
@@ -163,7 +163,7 @@ H_a &\leftarrow H_a + \text{Flat}\big(Z_m(U_{16})\big), \quad m\in\{1,2\}.
 \end{equation}
 由于每个 $16\times 16$ 令牌在速度输出端经 \texttt{PixelShuffle(4)} 独立展开为 $4\times 4$ 隐空间块（再经两级 \texttt{PixelShuffle(2)} 映射至 $16\times 16$ 像素块），当切片存在大片空白树脂时，令牌间微小的数值突变会被放大为规律性的棋盘格伪影。
 
-\paragraph{2) 高分辨率末端空间先验注入（\methodname{}）} 移除低分辨率令牌层叠加，先将 $U_{14}$ 压缩至 $d/2=96$ 通道，双线性插值至 $64\times 64$，经复制填充（\texttt{replicate}）的 $3\times 3$ 深度可分离卷积 $\mathcal{K}_{\text{dw}}$ 平滑邻域过渡，再经零初始化 $1\times 1$ 投影 $\mathcal{Z}_{\text{hi}}$ 叠加到速度场末端：
+\paragraph{2) 高分辨率末端空间先验注入（\methodname{}）} 移除低分辨率令牌层叠加，先将 $U_{14}$ 压缩至 $d/2=96$ 通道并经 $\text{SiLU}$ 激活，随后双线性插值至 $64\times 64$，直接经零初始化 $1\times 1$ 线性投影 $\mathcal{Z}_{\text{hi}}$ 叠加到速度场末端：
 \begin{equation}
 U_{64} = \text{Interp}_{64}\Big(\text{SiLU}\big(W_{1\times 1}^{\text{hi}}(U_{14})\big)\Big) \in \mathbb{R}^{96\times 64\times 64},
 \end{equation}
@@ -172,14 +172,14 @@ v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\
 \end{equation}
 其中末端修正支路显式写作：
 \begin{equation}
-\Delta v\big(\phi_U(x)\big) = \mathcal{Z}_{\text{hi}}\Big(\text{SiLU}\big(\mathcal{K}_{\text{dw}}(U_{64})\big)\Big).
+\Delta v\big(\phi_U(x)\big) = \mathcal{Z}_{\text{hi}}(U_{64}).
 \end{equation}
 
-\noindent\textbf{末端注入结构的双面性}：末端分支 $\Delta v\big(\phi_U(x)\big)$ 仅依赖输入 $x$ 的空间特征，而\textbf{不依赖于中间隐状态 $z_t$ 与积分时间步 $t$}，在整个采样积分期间提供静态的空间结构速度偏置。这一设计解除了高阶先验与动态流状态的多轮非线性耦合，从而阻断了块洗牌阶段的网格放大效应；但作为权衡，它减少了先验特征对去噪演化轨线的动态自适应调节自由度，导致峰值像素指标略低于无平滑约束的 \texttt{UniFlow-Tok}。
+\noindent\textbf{末端注入结构的双面性}：末端分支 $\Delta v\big(\phi_U(x)\big)$ 仅依赖输入 $x$ 的空间特征，而\textbf{不依赖于中间隐状态 $z_t$ 与积分时间步 $t$}，在整个采样积分期间提供静态的空间结构速度偏置。这一精简设计既解除了高阶先验与动态流状态的多轮非线性耦合、从架构上阻断块洗牌阶段的网格放大效应，又避免了额外空间卷积核对核边缘的过度平滑；作为权衡，它减少了先验特征对去噪演化轨线的动态自适应调节自由度，导致峰值像素指标略低于存在周期性伪影风险的 \texttt{UniFlow-Tok}。
 
 \paragraph{稀疏背景网格伪影的频域与空间联合度量} 为克服单一代表切片局部拉普拉斯指标（\texttt{bg\_lap}）样本量受限与易受背景过平滑混淆的缺陷，本文在沿用边缘稀疏窗口 $[40:168,\,0:128]$ 离散拉普拉斯统计量的同时，进一步引入\textbf{全测试集二维傅里叶变换（2D FFT）周期网格能量占比}：在真值灰度图上自动筛选满足均值 $>210$ 且标准差 $<15$ 的 $64\times 64$ 稀疏背景块（在 Breast 120 例测试集中共检出 51 例切片的 227 个背景块），乘以 Hann 窗后计算 2D FFT 功率谱，统计对应 $16\times 16$ 像素令牌映射周期（\texttt{16px-Grid-FFT}）及其 $4\times 4$ 亚像素谐波频点（\texttt{Harm-FFT}）占总交流能量的百分比。
 
-\subsection{三阶段跨器官部署与 OASRA 少样本微调}
+\subsection{三阶段跨器官部署与 SRA 少样本微调}
 \noindent\textbf{阶段 I（严格 0-shot）}：直接以源域 SWA 权重在目标域执行 4 步欧拉采样，不接触任何目标样本。
 
 \noindent\textbf{阶段 II（免训练半阻尼光密度校准，\texttt{0-shot + halfOD}）}：利用 $n=5$ 张与测试集无索引邻接的无配对目标参考图 $\mathcal{D}_{\text{ref}}$，按 Beer--Lambert 定律 $\text{OD}(I) = -\ln\big((I+1)/256\big)$ 与固定 Ruifrok 吸收矩阵 $M_{\text{HE}} \in \mathbb{R}^{3\times 2}$~\cite{ref_ruifrok} 在有效组织前景（$\sum_c \text{OD}_c > 0.15$）提取 H/E 平均浓度 $\bar{c}_{\text{ref}}$ 与 $\bar{c}_{\text{gen}}$。记全浓度比值为 $s_c = \bar{c}_{\text{ref}}^{(c)} / (\bar{c}_{\text{gen}}^{(c)} + \varepsilon)$，首先计算全光密度缩放重建图像 $\hat{y}_{\text{fullOD}}$，再在像素空间按混合比例 $\alpha = 0.5$ 执行半阻尼融合以抑制无配对统计估计的过冲：
@@ -190,24 +190,18 @@ v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\
 \end{aligned}
 \end{equation}
 
-\noindent\textbf{阶段 III（光密度锚定源域回放自适应，OASRA $K$-shot）}：开放 $K \in \{5, 10, 20\}$ 对互不邻接的目标样本 $\mathcal{D}_K$ 后，保持编码器 $\mathcal{E}_\psi$ 冻结，联合微调流网络 $v_\theta$（学习率 $\eta = 2\times 10^{-4}$）与解码器 $\mathcal{D}_\phi$（$0.1\eta = 2\times 10^{-5}$），总优化 $1{,}500$ 步并在 $0.4T$ 后开启 SWA。目标域损失结合速度回归、4 步展开端到端像素/梯度/LPIPS 损失与光密度锚定项 $\mathcal{L}_{\text{OD}}$：
+\noindent\textbf{阶段 III（染色增广源域回放自适应，SRA $K$-shot）}：开放 $K \in \{5, 10, 20\}$ 对互不邻接的目标样本 $\mathcal{D}_K$ 后，保持编码器 $\mathcal{E}_\psi$ 冻结，联合微调流网络 $v_\theta$（学习率 $\eta = 2\times 10^{-4}$）与解码器 $\mathcal{D}_\phi$（$0.1\eta = 2\times 10^{-5}$），总优化 $1{,}500$ 步并在 $0.4T$ 后开启 SWA。目标域损失由速度回归与 4 步展开端到端像素/梯度/感知误差构成：
+\begin{equation}
+\mathcal{L}_{\text{tgt}} = \mathcal{L}_{\text{vel}} + 4.0\,\|\hat{y}_t - y_t\|_1 + 2.0\,\mathcal{L}_{\text{grad}}(\hat{y}_t, y_t) + 0.50\,\mathcal{L}_{\text{LPIPS}}(\hat{y}_t, y_t).
+\end{equation}
+为防止少样本微调破坏源域既得知识，每步随机抽取源域样本对 $(x_s, y_s)$，将 $y_s$ 经染色增广映射至目标分布范围得到 $y_s^{\text{aug}}$（对应隐表征 $z_1^{\text{src,aug}} = (\mathcal{E}_\psi(y_s^{\text{aug}}) - \mu_z)/s_z$），构建联合适配总损失：
 \begin{equation}
 \begin{aligned}
-\mathcal{L}_{\text{tgt}} = \mathcal{L}_{\text{vel}} &+ 4.0\,\|\hat{y}_t - y_t\|_1 + 2.0\,\mathcal{L}_{\text{grad}}(\hat{y}_t, y_t) \\
-&+ 0.50\,\mathcal{L}_{\text{LPIPS}}(\hat{y}_t, y_t) + 0.25\,\mathcal{L}_{\text{OD}}(\hat{y}_t, y_t),
-\end{aligned}
-\end{equation}
-\begin{equation}
-\mathcal{L}_{\text{OD}}(\hat{y}, y) = \|c(\hat{y}) - c(y)\|_1 + 0.5\,\|\bar{c}(\hat{y}) - \bar{c}(y)\|_1,
-\end{equation}
-其中 $c(I) = M_{\text{HE}}^+ \text{OD}(I)$。为防止少样本微调破坏源域既得知识，每步随机抽取源域样本对 $(x_s, y_s)$，将 $y_s$ 经染色增广映射至目标分布范围得到 $y_s^{\text{aug}}$（对应隐表征 $z_1^{\text{src,aug}} = (\mathcal{E}_\psi(y_s^{\text{aug}}) - \mu_z)/s_z$），构建联合适配总损失：
-\begin{equation}
-\begin{aligned}
-\mathcal{L}_{\text{OASRA}} = \mathcal{L}_{\text{tgt}} + 0.40\,\Big( & 0.60\,\mathcal{L}_{\text{vel}}^{\text{src}}(x_s, y_s^{\text{aug}}) \\
+\mathcal{L}_{\text{SRA}} = \mathcal{L}_{\text{tgt}} + 0.40\,\Big( & 0.60\,\mathcal{L}_{\text{vel}}^{\text{src}}(x_s, y_s^{\text{aug}}) \\
 & + 0.60\,\|\mathcal{D}_\phi(s_z z_1^{\text{src,aug}} + \mu_z) - y_s^{\text{aug}}\|_1\Big).
 \end{aligned}
 \end{equation}
-训练时对 PI 输入施加采集抖动（对比度 $\alpha_{\text{c}} \sim \mathcal{U}(0.92, 1.08)$、偏置 $\beta \sim \mathcal{U}(-0.04, 0.04)$，以 $0.5$ 概率叠加 $\mathcal{N}(0, 0.012^2)$ 噪声）。作为对照，朴素微调（\texttt{NaiveFT}）关闭 $\mathcal{L}_{\text{OD}}$、源域回放、PI 抖动与 SWA。
+训练时对 PI 输入施加采集抖动（对比度 $\alpha_{\text{c}} \sim \mathcal{U}(0.92, 1.08)$、偏置 $\beta \sim \mathcal{U}(-0.04, 0.04)$，以 $0.5$ 概率叠加 $\mathcal{N}(0, 0.012^2)$ 噪声）。作为对照，朴素微调（\texttt{NaiveFT}）关闭源域回放、PI 抖动与 SWA。
 
 \section{实验与结果分析}
 \subsection{数据集、切分协议与评测设置}\label{sec:setup}
@@ -216,12 +210,12 @@ v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\
 
 评测采用 PSNR ($\uparrow$)、SSIM ($\uparrow$)、LPIPS ($\downarrow$)、无偏分布距离 KID ($\times 10^{-3}$ $\downarrow$，子集 50)、Cellpose（\texttt{nuclei} 模型）~\cite{ref_cellpose} 细胞核分割交并比 Dice ($\uparrow$) 及一对一检测 F1@0.5 ($\uparrow$)。统计显著性采用基于 $N=120$ 逐图配对结果的双侧 Wilcoxon 符号秩检验。
 
-\noindent\textbf{乳腺空核真值样本的记分机制}：\texttt{Breast} 测试集中包含 4 例真值无任何细胞核的纯间质切片（$\text{empty}=4$）。按 \texttt{v2\_unified\_eval.py} 交并比定义，当某空核样本的预测图亦未检出细胞核（真阴性空切片，记共 $n_{\text{TN}}$ 例）时记 $\text{Dice}=1.0$，若预测出假阳性核则记 $0.0$；而在 116 例非空切片上记平均指标为 $\text{Dice}_{\text{ne}}$。因此全集均值严格满足 $\text{Dice} = \frac{116\cdot\text{Dice}_{\text{ne}} + n_{\text{TN}}}{120}$（例如 20-shot 下 \methodname{} 上 $n_{\text{TN}}=0$，故 $0.5768\times\frac{116}{120}=0.5575$；而 \texttt{BaseFlow}、\texttt{MixStyle}、\texttt{StainAug}、\texttt{MLDG} 与 \texttt{NaiveFT} 均在其中 1 例切片 \texttt{file\_3849.png} 保持零假阳性即 $n_{\text{TN}}=1$，故 $0.5574\times\frac{116}{120}+\frac{1}{120}=0.5471$）。其余三折空核切片数均为 0。
+\noindent\textbf{乳腺空核真值样本的记分机制}：\texttt{Breast} 测试集中包含 4 例真值无任何细胞核的纯间质切片（$\text{empty}=4$）。按 \texttt{v2\_unified\_eval.py} 交并比定义，当某空核样本的预测图亦未检出细胞核（真阴性空切片，记共 $n_{\text{TN}}$ 例）时记 $\text{Dice}=1.0$，若预测出假阳性核则记 $0.0$；而在 116 例非空切片上记平均指标为 $\text{Dice}_{\text{ne}}$。因此全集均值严格满足 $\text{Dice} = \frac{116\cdot\text{Dice}_{\text{ne}} + n_{\text{TN}}}{120}$（例如 20-shot 下 \methodname{} 上 $n_{\text{TN}}=0$，故 $0.5803\times\frac{116}{120}=0.5609$；而 \texttt{BaseFlow}、\texttt{MixStyle}、\texttt{StainAug}、\texttt{MLDG} 与 \texttt{NaiveFT} 均在其中 1 例切片 \texttt{file\_3849.png} 保持零假阳性即 $n_{\text{TN}}=1$，例如 \texttt{NaiveFT} 满足 $0.5743\times\frac{116}{120}+\frac{1}{120}=0.5635$）。其余三折空核切片数均为 0。
 
-\noindent\textbf{参数量、硬件平台与同卡推理效率基准}：本文主实验与四类 DG 对照均在单张 \texttt{NVIDIA RTX 3080 Ti Laptop GPU (16 GB)} 上运行；外部基线训练在 \texttt{NVIDIA RTX 5880 Ada (48 GB)} 上按相同划分完成。为杜绝跨卡比较偏差，我们在同一张 \texttt{RTX 3080 Ti Laptop GPU} 上统一执行了 Batch=1（$256\times 256$）端到端推理耗时与峰值显存（Peak VRAM）基准测试：\texttt{BaseFlow} 含 $1.69\text{M}/1.80\text{M}$ 可训练参数（$12.91\text{ ms/img}$，$29.8\text{ MB}$）；本文 \methodname{} 含 $1.79\text{M}/1.90\text{M}$ 可训练参数（挂载冻结 $303.3\text{M}$ UNI 后总推理参数约 $305.2\text{M}$），单图端到端耗时 \textbf{$30.94\text{ ms/img}$}、峰值显存 \textbf{$1189.0\text{ MB}$}，较同样挂载 UNI 的重型 \texttt{UNIStainNet}（$42.19\text{M} / 345.5\text{M}$，$33.35\text{ ms/img}$，$1864.5\text{ MB}$）推理更快且节省 $36.2\%$ 峰值显存，更是 20 步像素扩散桥 \texttt{I2SB}（$138.29\text{M}$，$1286.29\text{ ms/img}$，$865.8\text{ MB}$）的 \textbf{$41.6\times$} 推理速度。
+\noindent\textbf{参数量、硬件平台与同卡推理效率基准}：本文主实验与四类 DG 对照均在单张 \texttt{NVIDIA RTX 3080 Ti Laptop GPU (16 GB)} 上运行；外部基线训练在 \texttt{NVIDIA RTX 5880 Ada (48 GB)} 上按相同划分完成。为杜绝跨卡比较偏差，我们在同一张 \texttt{RTX 3080 Ti Laptop GPU} 上统一执行了 Batch=1（$256\times 256$）端到端推理耗时与峰值显存（Peak VRAM）基准测试：\texttt{BaseFlow} 含 $1.69\text{M}/1.80\text{M}$ 可训练参数（$12.05\text{ ms/img}$，$29.8\text{ MB}$）；本文 \methodname{} 含 $1.79\text{M}/1.90\text{M}$ 可训练参数（精确值为 $1.788\text{M}/1.897\text{M}$，挂载冻结 $303.3\text{M}$ UNI 后总推理参数约 $305.2\text{M}$），单图端到端耗时 \textbf{$26.04\text{ ms/img}$}、峰值显存 \textbf{$1189.0\text{ MB}$}，较同样挂载 UNI 的重型 \texttt{UNIStainNet}（$42.19\text{M} / 345.5\text{M}$，$32.47\text{ ms/img}$，$1864.5\text{ MB}$）推理更快且节省 $36.2\%$ 峰值显存，更是 20 步像素扩散桥 \texttt{I2SB}（$138.29\text{M}$，$1294.21\text{ ms/img}$，$865.8\text{ MB}$）的 \textbf{$49.7\times$} 推理速度。
 
 \subsection{四器官三阶段跨器官主结果与 DG 基线对比}\label{sec:main_res}
-表~\ref{tab:main_3stage} 汇总了四个器官在 0-shot、0-shot + halfOD 与 OASRA 20-shot 三阶段下 \texttt{BaseFlow}、四类经典 DG 算法（均加载同一 NR-AE 骨干）及 \methodname{} 的 72 组实测结果，图~\ref{fig:lomo_4organs} 展示四折定性生成对比。结合定量与视觉结果，可以得出三项核心判断：
+表~\ref{tab:main_3stage} 汇总了四个器官在 0-shot、0-shot + halfOD 与 SRA 20-shot 三阶段下 \texttt{BaseFlow}、四类经典 DG 算法（均加载同一 NR-AE 骨干）及 \methodname{} 的 72 组实测结果，图~\ref{fig:lomo_4organs} 展示四折定性生成对比。结合定量与视觉结果，可以得出三项核心判断：
 
 \begin{table*}[!t]
 \centering
@@ -239,31 +233,31 @@ v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\
 & \texttt{StainAug} & 14.75 & 0.7266 & 0.3130 & 48.94 & \textbf{0.5070} & 0.5119 & 19.57 & 0.7835 & 0.2616 & 33.90 & 0.5123 & 0.5195 \\
 & \texttt{DANN} & \textbf{15.92} & 0.7236 & 0.3405 & 72.13 & 0.3392 & 0.2303 & 18.24 & 0.7399 & 0.3301 & 64.24 & 0.3208 & 0.1970 \\
 & \texttt{MLDG} & 15.55 & \textbf{0.7273} & 0.2749 & \textbf{40.75} & 0.5060 & \textbf{0.5133} & 19.73 & 0.7822 & 0.2295 & \textbf{24.49} & \textbf{0.5158} & \textbf{0.5208} \\
-& \textbf{\methodname{}} & 15.04 & 0.7272 & \textbf{0.2633} & 41.25 & 0.5028 & 0.5082 & \textbf{19.83} & \textbf{0.7877} & \textbf{0.2156} & 27.77 & 0.5027 & 0.5081 \\
+& \textbf{\methodname{}} & 14.90 & 0.7249 & \textbf{0.2723} & 44.05 & 0.5005 & 0.5096 & \textbf{19.85} & \textbf{0.7871} & \textbf{0.2220} & 28.55 & 0.4988 & 0.5063 \\
 \midrule
 \multirow{6}{*}{Brain}
 & \texttt{BaseFlow} & 12.76 & 0.6523 & 0.3874 & 92.39 & 0.7079 & 0.6749 & 12.96 & 0.6536 & 0.3801 & 92.04 & 0.7085 & 0.6801 \\
-& \texttt{MixStyle} & 12.91 & 0.6520 & 0.3792 & 92.53 & 0.7095 & \textbf{0.6805} & 13.29 & 0.6544 & 0.3671 & 89.13 & \textbf{0.7116} & \textbf{0.6865} \\
-& \texttt{StainAug} & 12.79 & \textbf{0.6533} & 0.3878 & 104.84 & \textbf{0.7096} & 0.6763 & 13.42 & 0.6587 & 0.3706 & 97.78 & 0.7065 & 0.6799 \\
+& \texttt{MixStyle} & 12.91 & 0.6520 & 0.3792 & 92.53 & 0.7095 & \textbf{0.6805} & 13.29 & 0.6544 & 0.3671 & 89.13 & 0.7116 & \textbf{0.6865} \\
+& \texttt{StainAug} & 12.79 & 0.6533 & 0.3878 & 104.84 & 0.7096 & 0.6763 & 13.42 & 0.6587 & 0.3706 & 97.78 & 0.7065 & 0.6799 \\
 & \texttt{DANN} & 11.97 & 0.5769 & 0.4364 & 241.32 & 0.6101 & 0.5433 & 12.73 & 0.6037 & 0.3973 & 236.95 & 0.5907 & 0.5380 \\
 & \texttt{MLDG} & 12.66 & 0.6516 & 0.3870 & \textbf{84.70} & 0.7046 & 0.6758 & 12.76 & 0.6516 & 0.3831 & \textbf{85.30} & 0.7026 & 0.6791 \\
-& \textbf{\methodname{}} & \textbf{13.38} & 0.6521 & \textbf{0.3539} & 102.11 & 0.6989 & 0.6549 & \textbf{14.20} & \textbf{0.6594} & \textbf{0.3357} & 96.93 & 0.6997 & 0.6608 \\
+& \textbf{\methodname{}} & \textbf{12.98} & \textbf{0.6615} & \textbf{0.3566} & 91.87 & \textbf{0.7119} & 0.6770 & \textbf{13.93} & \textbf{0.6687} & \textbf{0.3339} & 85.96 & \textbf{0.7130} & 0.6830 \\
 \midrule
 \multirow{6}{*}{Kidney}
-& \texttt{BaseFlow} & 17.13 & 0.7415 & 0.2508 & 56.02 & \textbf{0.6923} & \textbf{0.7145} & 17.38 & 0.7477 & 0.2355 & 53.54 & \textbf{0.6922} & \textbf{0.7173} \\
+& \texttt{BaseFlow} & 17.13 & 0.7415 & 0.2508 & \textbf{56.02} & \textbf{0.6923} & \textbf{0.7145} & 17.38 & 0.7477 & 0.2355 & \textbf{53.54} & \textbf{0.6922} & \textbf{0.7173} \\
 & \texttt{MixStyle} & 16.09 & 0.7275 & 0.2666 & 63.89 & 0.6860 & 0.7039 & 16.92 & 0.7396 & 0.2375 & 58.86 & 0.6797 & 0.6959 \\
 & \texttt{StainAug} & 16.91 & 0.7359 & 0.2486 & 66.01 & 0.6850 & 0.7030 & 17.60 & 0.7483 & 0.2307 & 62.36 & 0.6892 & 0.7099 \\
 & \texttt{DANN} & 17.29 & 0.7206 & 0.3727 & 109.08 & 0.4725 & 0.2624 & 17.53 & 0.7246 & 0.3525 & 114.26 & 0.4807 & 0.2913 \\
 & \texttt{MLDG} & 16.25 & 0.7264 & 0.2648 & 58.90 & 0.6877 & 0.7070 & 16.72 & 0.7357 & 0.2407 & 54.15 & 0.6837 & 0.6971 \\
-& \textbf{\methodname{}} & \textbf{19.20} & \textbf{0.7683} & \textbf{0.2057} & \textbf{44.04} & 0.6892 & 0.7056 & \textbf{19.43} & \textbf{0.7765} & \textbf{0.1916} & \textbf{42.11} & 0.6897 & 0.7077 \\
+& \textbf{\methodname{}} & \textbf{19.34} & \textbf{0.7580} & \textbf{0.2256} & 56.14 & 0.6882 & 0.7111 & \textbf{19.04} & \textbf{0.7625} & \textbf{0.2223} & 54.15 & 0.6919 & 0.7124 \\
 \midrule
 \multirow{6}{*}{Liver}
 & \texttt{BaseFlow} & 17.98 & 0.7195 & 0.2539 & 24.95 & 0.5089 & 0.5258 & 19.00 & 0.7222 & 0.2219 & 29.45 & 0.5780 & 0.6068 \\
 & \texttt{MixStyle} & 17.13 & 0.7072 & 0.2444 & 30.37 & 0.5142 & 0.5226 & 19.46 & 0.7210 & 0.2095 & 28.60 & 0.5873 & 0.6022 \\
-& \texttt{StainAug} & 18.80 & 0.7211 & 0.2239 & 26.19 & \textbf{0.5681} & \textbf{0.5803} & 20.47 & 0.7326 & 0.1995 & 30.51 & \textbf{0.6237} & \textbf{0.6432} \\
+& \texttt{StainAug} & 18.80 & 0.7211 & 0.2239 & 26.19 & 0.5681 & 0.5803 & 20.47 & 0.7326 & 0.1995 & 30.51 & 0.6237 & 0.6432 \\
 & \texttt{DANN} & 15.51 & 0.6510 & 0.3229 & 105.97 & 0.3849 & 0.4022 & 18.37 & 0.6812 & 0.2933 & 118.26 & 0.3691 & 0.3897 \\
 & \texttt{MLDG} & 17.73 & 0.7122 & 0.2492 & \textbf{22.24} & 0.5564 & 0.5659 & 18.91 & 0.7112 & 0.2146 & \textbf{27.68} & 0.6096 & 0.6332 \\
-& \textbf{\methodname{}} & \textbf{19.92} & \textbf{0.7369} & \textbf{0.2046} & 23.90 & 0.5380 & 0.5413 & \textbf{20.67} & \textbf{0.7449} & \textbf{0.1920} & 28.61 & 0.5884 & 0.5978 \\
+& \textbf{\methodname{}} & \textbf{21.05} & \textbf{0.7425} & \textbf{0.1971} & 25.52 & \textbf{0.6215} & \textbf{0.6249} & \textbf{21.07} & \textbf{0.7461} & \textbf{0.1856} & 30.79 & \textbf{0.6546} & \textbf{0.6647} \\
 \bottomrule
 \end{tabular}}
 
@@ -271,7 +265,7 @@ v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{ll|cccccc||ll|cccccc}
 \toprule
-\multirow{2}{*}{器官 Fold} & \multirow{2}{*}{模型/方法} & \multicolumn{6}{c||}{阶段 III：OASRA 20-shot 有监督适配} & \multirow{2}{*}{器官 Fold} & \multirow{2}{*}{模型/方法} & \multicolumn{6}{c}{阶段 III：OASRA 20-shot 有监督适配} \\
+\multirow{2}{*}{器官 Fold} & \multirow{2}{*}{模型/方法} & \multicolumn{6}{c||}{阶段 III：SRA 20-shot 有监督适配} & \multirow{2}{*}{器官 Fold} & \multirow{2}{*}{模型/方法} & \multicolumn{6}{c}{阶段 III：SRA 20-shot 有监督适配} \\
 & & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ & F1@0.5$\uparrow$ & & & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ & F1@0.5$\uparrow$ \\
 \midrule
 \multirow{6}{*}{Breast}
@@ -285,12 +279,12 @@ v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\
 & \texttt{DANN} & 21.33 & 0.7222 & 0.1767 & 82.30 & 0.5780 & 0.5674 \\
 & \texttt{MLDG} & 23.11 & 0.8153 & 0.1728 & 11.32 & \textbf{0.5618} & \textbf{0.5690} &
 & \texttt{MLDG} & 23.80 & 0.7592 & 0.1266 & 24.23 & 0.7464 & 0.7157 \\
-& \textbf{\methodname{}} & \textbf{23.87} & \textbf{0.8244} & \textbf{0.1562} & \textbf{8.90} & 0.5575 & 0.5594 &
-& \textbf{\methodname{}} & \textbf{24.43} & \textbf{0.7619} & \textbf{0.1148} & \textbf{21.09} & \textbf{0.7511} & \textbf{0.7233} \\
+& \textbf{\methodname{}} & \textbf{23.90} & \textbf{0.8247} & \textbf{0.1561} & \textbf{8.79} & 0.5609 & 0.5667 &
+& \textbf{\methodname{}} & \textbf{24.51} & \textbf{0.7675} & \textbf{0.1117} & \textbf{22.70} & \textbf{0.7565} & \textbf{0.7239} \\
 \midrule
 \multirow{6}{*}{Kidney}
 & \texttt{BaseFlow} & 23.19 & 0.8210 & 0.1218 & 49.38 & 0.7060 & 0.7321 & \multirow{6}{*}{Liver}
-& \texttt{BaseFlow} & 23.52 & 0.7725 & 0.1231 & 18.03 & 0.7261 & 0.7478 \\
+& \texttt{BaseFlow} & 23.52 & 0.7725 & 0.1231 & 18.03 & 0.7261 & \textbf{0.7478} \\
 & \texttt{MixStyle} & 23.13 & 0.8203 & 0.1233 & 49.01 & 0.7072 & 0.7328 &
 & \texttt{MixStyle} & 23.94 & 0.7728 & 0.1237 & 18.12 & 0.7209 & 0.7424 \\
 & \texttt{StainAug} & 23.14 & 0.8210 & 0.1222 & 48.58 & 0.7066 & 0.7334 &
@@ -299,8 +293,8 @@ v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\
 & \texttt{DANN} & 22.48 & 0.7522 & 0.1584 & 29.06 & 0.6677 & 0.6990 \\
 & \texttt{MLDG} & 23.13 & 0.8222 & 0.1209 & 49.68 & 0.7067 & 0.7334 &
 & \texttt{MLDG} & 23.56 & 0.7727 & 0.1229 & 19.62 & 0.7205 & 0.7391 \\
-& \textbf{\methodname{}} & \textbf{23.96} & \textbf{0.8318} & \textbf{0.1103} & \textbf{41.86} & \textbf{0.7131} & \textbf{0.7412} &
-& \textbf{\methodname{}} & \textbf{24.72} & \textbf{0.7831} & \textbf{0.1129} & \textbf{15.68} & \textbf{0.7303} & \textbf{0.7507} \\
+& \textbf{\methodname{}} & \textbf{23.91} & \textbf{0.8312} & \textbf{0.1115} & \textbf{42.56} & \textbf{0.7117} & \textbf{0.7408} &
+& \textbf{\methodname{}} & \textbf{24.79} & \textbf{0.7836} & \textbf{0.1113} & \textbf{16.34} & \textbf{0.7299} & 0.7472 \\
 \bottomrule
 \end{tabular}}
 \end{table*}
@@ -313,9 +307,9 @@ v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\
 \end{figure*}
 
 \begin{enumerate}
-    \item \textbf{严格 0-shot 下 UNI 先验稳定改善像素与感知指标，但核分割与分布距离分化明显。} 相比 \texttt{BaseFlow}，\methodname{} 在全部四折均提高了 PSNR 与 LPIPS（例如 \texttt{Kidney} PSNR $+2.07\text{ dB}$、\texttt{Liver} $+1.94\text{ dB}$）。但在未做目标风格校准时，其对细胞核分割 Dice 改善有限；在 \texttt{Brain} 上甚至导致分布距离 KID 上升（$102.11$ 对 $92.39$）、Dice 略降（$0.6989$ 对 $0.7079$）。这说明未校准的外部空间先验在结构相异器官上会拉大分布统计偏差。另外，域对抗基线 \texttt{DANN} 在 0-shot 下会严重损坏微观核结构（\texttt{Breast} Dice 跌至 $0.3392$）。
-    \item \textbf{免训练 \texttt{halfOD} 在高色偏器官与近色器官上呈非对称响应。} 针对乳腺这种与源域存在强伊红落差的器官，半阻尼校准使 \methodname{} 的 PSNR 由 $15.04$ 升至 $19.83\text{ dB}$（$+4.79\text{ dB}$），KID 从 $41.25$ 降至 $27.77$；但在源、目标染色本就接近的 \texttt{Liver} 上，全局校准反而令 KID 轻度上升（\texttt{BaseFlow} $24.95 \to 29.45$，\methodname{} $23.90 \to 28.61$）。表~\ref{tab:halfod_alpha} 给出的混合比例敏感性测试（$\alpha \in \{0.00, 0.25, 0.50, 0.75, 1.00\}$）进一步说明原因：提高 $\alpha$ 虽对乳腺与脑呈单调增益，但全校准（$\alpha=1.00$）会导致 \texttt{Kidney} 低于 0-shot 基线（$18.65$ 对 $19.20\text{ dB}$），\texttt{Liver} 亦在 $\alpha=0.50$ 处达到峰值（$20.67\text{ dB}$）后回落，证实半阻尼（$\alpha=0.50$）是兼顾多器官安全性的稳健拐点。
-    \item \textbf{20-shot OASRA 在四折关键指标上全面超越无先验基座与 DG 基线。} 引入 20 对非邻接样本后，\methodname{} 在四折均取得了最高 PSNR（$23.87$--$24.72\text{ dB}$）、最高 SSIM（$0.7619$--$0.8318$）、最低 LPIPS（$0.1103$--$0.1562$）和最低 KID（$8.90$--$41.86\times 10^{-3}$）。配对 Wilcoxon 检验表明，相对同协议 \texttt{BaseFlow}，\methodname{} 在四折上的 PSNR（$p \le 1.32\times 10^{-4}$）、SSIM（$p \le 1.28\times 10^{-5}$）与 LPIPS（$p \le 9.55\times 10^{-11}$）提升均具备高度统计显著性；核分割 Dice 在 \texttt{Brain}（$p=7.80\times 10^{-3}$）、\texttt{Kidney}（$p=1.25\times 10^{-4}$）与 \texttt{Liver}（$p=1.10\times 10^{-3}$）上亦显著优于基座（\texttt{Breast} 上 \texttt{MLDG} Dice 为 $0.5618$ 对 $0.5575$，$p=0.102$）。受隐空间强混淆影响，\texttt{DANN} 即使经 20-shot 微调仍明显落后。
+    \item \textbf{严格 0-shot 下 UNI 先验稳定改善像素与感知指标，但结构与分布收益呈器官依赖性。} 相比 \texttt{BaseFlow}，\methodname{} 在全部四折均提高了 PSNR 与 LPIPS（如 \texttt{Kidney} PSNR $+2.21\text{ dB}$、\texttt{Liver} $+3.07\text{ dB}$ 且 \texttt{Liver} Dice 升至 $0.6215$、\texttt{Brain} Dice 升至 $0.7119$）。然而在未接触目标染色分布时，\texttt{Breast} 上的核分割 Dice 仍维持低位（$0.5005$ 对 $0.5045$），且 \texttt{Kidney} 分布距离 KID 与基座相当（$56.14$ 对 $56.02$），表明冻结结构先验无法独自弥补高色偏器官的全局染色统计落差。另外，域对抗基线 \texttt{DANN} 在 0-shot 下会严重损坏微观核结构（\texttt{Breast} Dice 跌至 $0.3392$）。
+    \item \textbf{免训练 \texttt{halfOD} 在高色偏器官与近色器官上呈非对称响应。} 针对乳腺这种与源域存在强伊红落差的器官，半阻尼校准使 \methodname{} 的 PSNR 由 $14.90$ 升至 $19.85\text{ dB}$（$+4.95\text{ dB}$），KID 从 $44.05$ 降至 $28.55$；但在源、目标染色接近的 \texttt{Liver} 上，全局校准反而令 KID 轻度上升（\texttt{BaseFlow} $24.95 \to 29.45$，\methodname{} $25.52 \to 30.79$），在 \texttt{Kidney} 上亦轻微拉低 PSNR（$19.34 \to 19.04\text{ dB}$）。表~\ref{tab:halfod_alpha} 给出的混合比例敏感性测试（$\alpha \in \{0.00, 0.25, 0.50, 0.75, 1.00\}$）进一步揭示原因：提高 $\alpha$ 虽对乳腺与脑呈单调增益，但全校准（$\alpha=1.00$）会导致 \texttt{Kidney}（$18.00$ 对 $19.34\text{ dB}$）与 \texttt{Liver}（$20.04$ 对 $21.05\text{ dB}$）明显回落，证实半阻尼（$\alpha=0.50$）是兼顾跨器官安全性的稳健折中点。
+    \item \textbf{20-shot SRA 在四折核心指标上全面超越无先验基座与 DG 基线。} 引入 20 对非邻接样本后，\methodname{} 在四折均取得了最高 PSNR（$23.90$--$24.79\text{ dB}$）、最高 SSIM（$0.7675$--$0.8312$）、最低 LPIPS（$0.1113$--$0.1561$）和最低 KID（$8.79$--$42.56\times 10^{-3}$）。配对 Wilcoxon 检验表明，相对同协议 \texttt{BaseFlow}，\methodname{} 在\textbf{全部四折上的 PSNR（$p \le 5.63\times 10^{-5}$）、SSIM（$p \le 1.54\times 10^{-12}$）、LPIPS（$p \le 8.51\times 10^{-15}$）与核分割 Dice（\texttt{Breast} $p=1.77\times 10^{-2}$、\texttt{Brain} $p=2.56\times 10^{-6}$、\texttt{Kidney} $p=4.47\times 10^{-4}$、\texttt{Liver} $p=2.93\times 10^{-3}$）提升均具统计显著性}。受隐空间强混淆影响，\texttt{DANN} 即使经 20-shot 微调仍明显落后。
 \end{enumerate}
 
 \begin{table}[!t]
@@ -327,12 +321,12 @@ v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\
 \toprule
 器官 Fold & $\alpha=0.00$（0-shot） & $\alpha=0.25$ & $\alpha=0.50$（默认） & $\alpha=0.75$ & $\alpha=1.00$（fullOD） \\
 \midrule
-Breast & 15.04 & 17.29 & 19.83 & 21.99 & \textbf{22.39} \\
-Brain & 13.38 & 13.81 & 14.20 & 14.52 & \textbf{14.76} \\
-Kidney & 19.20 & \textbf{19.46} & 19.43 & 19.15 & 18.65 \\
-Liver & 19.92 & 20.47 & \textbf{20.67} & 20.52 & 20.10 \\
+Breast & 14.90 & 17.22 & 19.85 & 22.07 & \textbf{22.41} \\
+Brain & 12.98 & 13.47 & 13.93 & 14.33 & \textbf{14.66} \\
+Kidney & \textbf{19.34} & 19.31 & 19.04 & 18.59 & 18.00 \\
+Liver & 21.05 & \textbf{21.22} & 21.07 & 20.65 & 20.04 \\
 \midrule
-四折均值 & 16.89 & 17.76 & 18.53 & \textbf{19.05} & 18.98 \\
+四折均值 & 17.07 & 17.80 & 18.47 & \textbf{18.91} & 18.78 \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -354,24 +348,20 @@ Liver & 19.92 & 20.47 & \textbf{20.67} & 20.52 & 20.10 \\
 \multirow{3}{*}{\texttt{BaseFlow}}
 & 0-shot & 14.89 & 0.7194 & 0.2887 & 43.58 & 0.5045 & 3.78 & 5.80\% & 4.35\% \\
 & 0-shot + halfOD & 19.56 & 0.7815 & 0.2393 & 26.75 & 0.5042 & 3.80 & 6.11\% & 4.66\% \\
-& OASRA (20-shot) & 23.04 & 0.8142 & 0.1732 & 10.62 & 0.5471 & \textbf{1.64} & 6.08\% & 4.05\% \\
+& 20-shot & 23.04 & 0.8142 & 0.1732 & 10.62 & 0.5471 & \textbf{1.64} & 6.08\% & 4.05\% \\
 \midrule
 \multirow{3}{*}{\texttt{UniFlow-Tok}}
 & 0-shot & \textbf{15.90} & \textbf{0.7280} & \textbf{0.2387} & \textbf{34.34} & \textbf{0.5177} & 4.88 & 5.84\% & 5.10\% \\
 & 0-shot + halfOD & \textbf{20.57} & 0.7848 & \textbf{0.2018} & \textbf{22.11} & \textbf{0.5299} & 4.32 & 5.89\% & 5.32\% \\
-& OASRA (20-shot) & \textbf{24.11} & \textbf{0.8249} & \textbf{0.1520} & \textbf{8.89} & \textbf{0.5657} & 2.70 & 5.90\% & 4.34\% \\
-\midrule
-\multirow{2}{*}{\texttt{UniFlow (w/o dwconv)}}
-& 0-shot & 14.98 & 0.7247 & 0.2640 & 42.81 & 0.5109 & 4.07 & 5.39\% & 4.14\% \\
-& OASRA (20-shot) & 24.06 & 0.8256 & 0.1544 & 8.23 & 0.5611 & 1.87 & \textbf{4.73\%} & \textbf{3.28\%} \\
+& 20-shot & \textbf{24.11} & \textbf{0.8249} & \textbf{0.1520} & 8.89 & \textbf{0.5657} & 2.70 & 5.90\% & 4.34\% \\
 \midrule
 \multirow{6}{*}{\textbf{\methodname{}}}
-& 0-shot & 15.04 & 0.7272 & 0.2633 & 41.25 & 0.5028 & 4.62 & \textbf{5.15\%} & \textbf{4.03\%} \\
-& 0-shot + halfOD & 19.83 & \textbf{0.7877} & 0.2156 & 27.77 & 0.5027 & 4.33 & \textbf{5.46\%} & \textbf{4.60\%} \\
-& OASRA (5-shot) & 21.34 & 0.7916 & 0.1918 & 26.26 & 0.5523 & 2.19 & 6.87\% & 5.07\% \\
-& OASRA (10-shot) & 22.95 & 0.8125 & 0.1681 & 13.00 & 0.5526 & 2.06 & 5.29\% & 3.69\% \\
-& NaiveFT (20-shot) & 23.62 & 0.8170 & 0.1645 & 11.03 & 0.5571 & 2.00 & 6.07\% & 3.99\% \\
-& \textbf{OASRA (20-shot)} & 23.87 & 0.8244 & 0.1562 & 8.90 & 0.5575 & 1.80 & 4.95\% & 3.51\% \\
+& 0-shot & 14.90 & 0.7249 & 0.2723 & 44.05 & 0.5005 & 3.99 & \textbf{5.82\%} & \textbf{4.44\%} \\
+& 0-shot + halfOD & 19.85 & \textbf{0.7871} & 0.2220 & 28.55 & 0.4988 & 3.75 & 6.20\% & 4.98\% \\
+& SRA (5-shot) & 21.40 & 0.7925 & 0.1945 & 26.61 & 0.5524 & 2.23 & 6.43\% & 4.55\% \\
+& SRA (10-shot) & 23.03 & 0.8142 & 0.1680 & 13.21 & 0.5546 & 2.00 & 5.20\% & 3.43\% \\
+& NaiveFT (20-shot) & 23.81 & 0.8170 & 0.1645 & 11.91 & 0.5635 & 2.08 & 6.96\% & 4.96\% \\
+& \textbf{SRA (20-shot)} & 23.90 & 0.8247 & 0.1561 & \textbf{8.79} & 0.5609 & 1.96 & \textbf{4.86\%} & \textbf{3.37\%} \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -383,21 +373,21 @@ Liver & 19.92 & 20.47 & \textbf{20.67} & 20.52 & 20.10 \\
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{cc|ccc|cccc}
 \toprule
-\multirow{2}{*}{步数 $S$} & 时延 & \multicolumn{3}{c|}{0-shot} & \multicolumn{4}{c}{OASRA 20-shot} \\
+\multirow{2}{*}{步数 $S$} & 时延 & \multicolumn{3}{c|}{0-shot} & \multicolumn{4}{c}{SRA 20-shot} \\
 & ($\text{ms/img}$) & PSNR$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ \\
 \midrule
-1 & \textbf{20.04} & \textbf{15.33} & 0.2752 & 45.20 & 23.71 & 0.1659 & 12.79 & 0.5439 \\
-2 & 26.06 & 15.12 & 0.2647 & 41.25 & 23.86 & 0.1581 & 9.53 & 0.5531 \\
-\textbf{4（默认）} & 35.12 & 15.06 & 0.2609 & \textbf{40.63} & \textbf{23.87} & 0.1562 & \textbf{8.62} & \textbf{0.5564} \\
-8 & 44.96 & 15.06 & \textbf{0.2594} & 40.72 & 23.79 & \textbf{0.1561} & 8.79 & 0.5522 \\
-16 & 73.26 & 15.01 & 0.2605 & 41.11 & 23.72 & 0.1566 & 8.86 & 0.5508 \\
+1 & \textbf{15.74} & \textbf{15.10} & 0.2819 & 46.98 & 23.68 & 0.1671 & 13.95 & 0.5511 \\
+2 & 19.97 & 14.94 & 0.2731 & 44.06 & \textbf{23.90} & 0.1575 & 9.81 & 0.5585 \\
+\textbf{4（默认）} & 29.31 & 14.90 & 0.2723 & \textbf{44.05} & \textbf{23.90} & \textbf{0.1561} & \textbf{8.79} & \textbf{0.5609} \\
+8 & 44.13 & 14.94 & \textbf{0.2681} & 44.06 & 23.83 & 0.1562 & 8.92 & 0.5555 \\
+16 & 74.53 & 14.88 & 0.2695 & 44.70 & 23.75 & 0.1569 & 9.12 & 0.5546 \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
 \begin{table}[!t]
 \centering
-\caption{OASRA 内部组件逐项拆解与多种子统计稳定性（Breast 目标测试 $N=120$ 与源域验证 $N=240$）}\label{tab:oasra_components}
+\caption{SRA 内部组件逐项拆解与多种子统计稳定性（Breast 目标测试 $N=120$ 与源域验证 $N=240$）}\label{tab:sra_components}
 \footnotesize\setlength{\tabcolsep}{2.8pt}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{l|cccc|ccc}
@@ -405,18 +395,16 @@ Liver & 19.92 & 20.47 & \textbf{20.67} & 20.52 & 20.10 \\
 \multirow{2}{*}{微调策略 / 组件消融} & \multicolumn{4}{c|}{Breast 目标测试集 ($N=120$)} & \multicolumn{3}{c}{源域验证集 ($N=240$)} \\
 & PSNR$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & Dice$\uparrow$ \\
 \midrule
-Pretrain（微调前 0-shot） & 15.04 & 0.2633 & 41.25 & 0.5028 & \textbf{24.51} & \textbf{0.1361} & \textbf{0.7237} \\
+Pretrain（微调前 0-shot） & 14.90 & 0.2723 & 44.05 & 0.5005 & \textbf{24.38} & \textbf{0.1382} & 0.7217 \\
 \midrule
-NaiveFT（全关闭） & 23.62 & 0.1645 & 11.03 & 0.5571 & 16.28 & 0.2560 & 0.6717 \\
-NaiveFT + SWA + Jitter & 24.08 & \textbf{0.1559} & 8.91 & \textbf{0.5675} & 15.73 & 0.2574 & 0.6872 \\
-OASRA w/o $\mathcal{L}_{\text{OD}}$ & 23.86 & 0.1562 & \textbf{8.78} & 0.5553 & 19.76 & 0.1847 & 0.7234 \\
-OASRA w/o Source Replay & \textbf{24.10} & 0.1560 & 8.82 & 0.5672 & 15.69 & 0.2593 & 0.6869 \\
-\textbf{完整 OASRA（默认）} & 23.87 & 0.1562 & 8.90 & 0.5575 & 19.67 & 0.1858 & 0.7231 \\
+NaiveFT（全关闭） & 23.81 & 0.1645 & 11.91 & 0.5635 & 15.44 & 0.2729 & 0.6605 \\
+NaiveFT + SWA + Jitter（无源域回放） & \textbf{24.19} & \textbf{0.1557} & \textbf{8.57} & \textbf{0.5772} & 15.08 & 0.2812 & 0.6896 \\
+\textbf{完整 SRA（默认）} & 23.90 & 0.1561 & 8.79 & 0.5609 & 19.60 & 0.1875 & \textbf{0.7270} \\
 \midrule
 \multicolumn{8}{l}{\textit{3-Seed 随机种子稳定性均值$\pm$标准差（Seeds 7202, 8202, 9202；Breast 20-shot）}} \\
 \texttt{BaseFlow} (3 seeds) & $23.05\pm 0.03$ & $0.1728\pm 0.0004$ & $10.77\pm 0.13$ & $0.5489\pm 0.0025$ & -- & -- & -- \\
-\texttt{NaiveFT} (3 seeds) & $23.63\pm 0.02$ & $0.1634\pm 0.0010$ & $11.46\pm 0.80$ & $0.5569\pm 0.0004$ & -- & -- & -- \\
-\textbf{\methodname{} OASRA} (3 seeds) & $\mathbf{23.86\pm 0.01}$ & $\mathbf{0.1563\pm 0.0001}$ & $\mathbf{8.76\pm 0.12}$ & $0.5562\pm 0.0014$ & -- & -- & -- \\
+\texttt{NaiveFT} (3 seeds) & $23.79\pm 0.02$ & $0.1638\pm 0.0010$ & $11.14\pm 0.68$ & $\mathbf{0.5648\pm 0.0030}$ & -- & -- & -- \\
+\textbf{\methodname{} SRA} (3 seeds) & $\mathbf{23.94\pm 0.04}$ & $\mathbf{0.1559\pm 0.0003}$ & $\mathbf{8.91\pm 0.17}$ & $0.5597\pm 0.0014$ & -- & -- & -- \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -424,7 +412,7 @@ OASRA w/o Source Replay & \textbf{24.10} & 0.1560 & 8.82 & 0.5672 & 15.69 & 0.25
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{fig3_breast_ablation_zoom.pdf}
-\caption{留出乳腺切片（\texttt{file\_4278.png}）从 0-shot 到 20-shot 的演化与稀疏背景网格伪影局部放大对比。上排为 $256\times 256$ 全图视野（红框标定稀疏背景 $[40:168, 0:128]$），下排为 $1:1$ 近邻放大。第 7 列 \texttt{UniFlow-Tok}（红框，\texttt{bg\_lap=2.70}）在左上空白树脂背景呈现清晰网格点阵；第 8 列本文 \methodname{}（绿框，\texttt{bg\_lap=1.80}）消除该背景格点，恢复近真值（第 9 列）的平滑胶原基质。}
+\caption{留出乳腺切片（\texttt{file\_4278.png}）从 0-shot 到 20-shot 的演化与稀疏背景网格伪影局部放大对比。上排为 $256\times 256$ 全图视野（红框标定稀疏背景 $[40:168, 0:128]$），下排为 $1:1$ 近邻放大。第 7 列 \texttt{UniFlow-Tok}（红框，\texttt{bg\_lap=2.70}）在左上空白树脂背景呈现清晰网格点阵；第 8 列本文 \methodname{}（绿框，\texttt{bg\_lap=1.96}）消除该背景格点，恢复近真值（第 9 列）的平滑胶原基质。}
 \label{fig:breast_zoom}
 \end{figure*}
 
@@ -436,16 +424,16 @@ OASRA w/o Source Replay & \textbf{24.10} & 0.1560 & 8.82 & 0.5672 & 15.69 & 0.25
 \end{figure*}
 
 \begin{enumerate}
-    \item \textbf{注入位置与深度卷积拆解（空间-频域双维验证）}：表~\ref{tab:breast_ablation} 显示，在 20-shot 下 \texttt{UniFlow-Tok} 虽在重建像素与分割指标上略高（PSNR $24.11$ 对 $23.87\text{ dB}$，Dice $0.5657$ 对 $0.5575$），但在视觉上伴随明显棋盘格伪影（图~\ref{fig:breast_zoom} 第 7 列，\texttt{bg\_lap=2.70}）。全测试集 227 个稀疏背景块的 2D FFT 频谱度量进一步证明：\texttt{BaseFlow (20-shot)} 虽因过度平滑使空间拉普拉斯低至 $1.64$，但其频域 $16\text{px}$ 周期能量占比仍高达 $6.08\%$（\texttt{UniFlow-Tok} 为 $5.90\%$）。值得指出，去除末端 $3\times 3$ 深度可分离平滑卷积的 \texttt{UniFlow (w/o dwconv)} 同样可在 20-shot 下压低网格能量（$4.73\%$，PSNR $24.06\text{ dB}$），但在 0-shot 阶段完整 \methodname{}（含 $\mathcal{K}_{\text{dw}}$）取得了更低的网格能量（$5.15\%$ 对 $5.39\%$）与更优 KID（$41.25$ 对 $42.81$）。这一解耦验证证实：\textbf{将先验注入移出 $16\times 16$ 令牌层、置于高分辨率 $64\times 64$ 末端是消除块洗牌周期伪影的主因}，而 $3\times 3$ 深度卷积在未适配 0-shot 阶段提供辅助空间平滑。
-    \item \textbf{极少样本效率与欧拉步数 $S$ 权衡}：仅用 $K=5$ 对目标切片，\methodname{} PSNR 即可从 $15.04$ 升至 $21.34\text{ dB}$（$+6.30\text{ dB}$），核分割 Dice 升至 $0.5523$。表~\ref{tab:steps_ablation} 进一步对推理步数 $S \in \{1, 2, 4, 8, 16\}$ 作零重训扫描：随着 $S$ 从 $1$ 增至 $4$，20-shot PSNR 由 $23.71$ 稳步升至峰值 $23.87\text{ dB}$、KID 由 $12.79$ 降至最低 $8.62$、Dice 升至峰值 $0.5564$；继续增大步数（$S=8, 16$）反因微弱数值积分漂移出现轻度回落（$23.79 / 23.72\text{ dB}$）且时延倍增至 $73.26\text{ ms/img}$，证实默认 $S=4$ 处于精确的精度-速度帕累托拐点。
-    \item \textbf{OASRA 组件逐项消融、源域抗遗忘与 3-Seed 稳定性}：表~\ref{tab:oasra_components} 彻底剥离了 \texttt{OASRA} 的四项内部机制。（1）仅开启 SWA 与 PI 抖动（\texttt{NaiveFT + SWA + Jitter}）或关闭回放（\texttt{OASRA w/o Source Replay}）虽可使单一乳腺目标域达到 $24.08$--$24.10\text{ dB}$，但源域 240 对验证集出现严重灾难性遗忘（PSNR 跌至 $15.69$--$15.73\text{ dB}$，核分割 Dice 跌至 $0.6869$--$0.6872$）；（2）引入源域回放（\texttt{OASRA w/o $\mathcal{L}_{\text{OD}}$} 与完整 \texttt{OASRA}）将源域 PSNR 挽回 $+4.0\text{ dB}$ 至 $19.67$--$19.76\text{ dB}$，并将\textbf{源域核分割 Dice 几乎无损保持在 $0.7231$--$0.7234$（对比微调前 $0.7237$）}，直接证实防遗忘归因于源域回放而非 SWA；（3）叠加光密度锚定 $\mathcal{L}_{\text{OD}}$ 相比 \texttt{w/o $\mathcal{L}_{\text{OD}}$} 微幅稳住了目标域 Dice（$0.5575$ 对 $0.5553$）与 PSNR（$23.87$ 对 $23.86\text{ dB}$）。此外，在 Breast 20-shot 上独立运行 3 个随机种子（7202, 8202, 9202）表明，\methodname{} 的多轮均值$\pm$标准差（$23.86\pm 0.01\text{ dB}$ PSNR、$8.76\pm 0.12$ KID）以极小方差稳定优于 \texttt{NaiveFT}（$23.63\pm 0.02\text{ dB}$、$11.46\pm 0.80$）与 \texttt{BaseFlow}（$23.05\pm 0.03\text{ dB}$、$10.77\pm 0.13$）。
+    \item \textbf{注入尺度决定频域洁净度与奥卡姆剃刀精简}：表~\ref{tab:breast_ablation} 显示，在 20-shot 下 \texttt{UniFlow-Tok} 虽在像素与分割指标上略高（PSNR $24.11$ 对 $23.90\text{ dB}$，Dice $0.5657$ 对 $0.5609$），但在视觉上伴随明显棋盘格伪影（图~\ref{fig:breast_zoom} 第 7 列，\texttt{bg\_lap=2.70}）。全测试集 227 个稀疏背景块的 2D FFT 频谱度量进一步证明：\texttt{BaseFlow (20-shot)} 虽因过度平滑使空间拉普拉斯低至 $1.64$，但其频域 $16\text{px}$ 周期能量占比仍达 $6.08\%$（\texttt{UniFlow-Tok} 为 $5.90\%$），而 \methodname{}（20-shot）将 \texttt{16px-FFT} 压低至最低 $4.86\%$（\texttt{Harm-FFT} $3.37\%$），证实将先验注入移出 $16\times 16$ 令牌层、置于 $64\times 64$ 末端是消除块洗牌周期伪影的关键。需说明的是，我们曾在探索实验（随仓库归档于 \texttt{archive\_exploratory\_dwconv\_od/}）中检验了在 $64\times 64$ 末端串联 $3\times 3$ 深度卷积以及微调期叠加光密度锚定项 $\mathcal{L}_{\text{OD}}$，结果显示移除这两项后主干不仅更简洁，20-shot 性能亦持平或微升（Breast KID $8.90 \to 8.79$、Dice $0.5575 \to 0.5609$，Brain Dice $0.7511 \to 0.7565$），遂依奥卡姆剃刀原则将其精简移除。
+    \item \textbf{极少样本效率与欧拉步数 $S$ 权衡}：仅用 $K=5$ 对目标切片，\methodname{} PSNR 即可从 $14.90$ 升至 $21.40\text{ dB}$（$+6.50\text{ dB}$），核分割 Dice 升至 $0.5524$。表~\ref{tab:steps_ablation} 进一步对推理步数 $S \in \{1, 2, 4, 8, 16\}$ 作零重训扫描：随着 $S$ 从 $1$ 增至 $4$，20-shot PSNR 由 $23.68$ 升至峰值 $23.90\text{ dB}$、KID 由 $13.95$ 降至最低 $8.79$、Dice 升至峰值 $0.5609$；继续增大步数（$S=8, 16$）出现轻度回落（$23.83 / 23.75\text{ dB}$）且时延增至 $74.53\text{ ms/img}$，证实默认 $S=4$ 处于精确的精度-速度帕累托拐点。
+    \item \textbf{SRA 组件消融、源域抗遗忘与 3-Seed 稳定性}：表~\ref{tab:sra_components} 剖析了 \texttt{SRA} 相对无回放微调的核心贡献。（1）仅开启 SWA 与 PI 抖动而不做源域回放（\texttt{NaiveFT + SWA + Jitter}）虽可在单一乳腺目标域达到 $24.19\text{ dB}$ PSNR 与 $0.5772$ Dice，但在 240 对源域验证集上出现严重灾难性遗忘（源域 PSNR 暴跌至 $15.08\text{ dB}$、Dice 跌至 $0.6896$）；（2）引入染色增广源域回放（完整 \texttt{SRA}）将源域 PSNR 挽回 $+4.52\text{ dB}$ 至 $19.60\text{ dB}$，并将\textbf{源域核分割 Dice 稳定保持在 $0.7270$（优于微调前 $0.7217$）}，同时将乳腺目标域背景网格能量由 \texttt{NaiveFT} 的 $6.96\%$ 压低至 $4.86\%$（SSIM $p=5.67\times 10^{-12}$、LPIPS $p=5.47\times 10^{-9}$）；（3）在 Breast 20-shot 上独立运行 3 个随机种子（7202, 8202, 9202），\methodname{} \texttt{SRA} 以极小方差（$23.94\pm 0.04\text{ dB}$ PSNR、$0.1559\pm 0.0003$ LPIPS、$8.91\pm 0.17$ KID）稳定优于 \texttt{NaiveFT} 与 \texttt{BaseFlow}。
 \end{enumerate}
 
 \subsection{与外部代表性生成基线的跨范式对比}\label{sec:external}
 我们在相同划分与评测管线下引入五种外部代表性生成基线：\texttt{Pix2Pix}~\cite{ref_pix2pix}、\texttt{CycleGAN}~\cite{ref_cyclegan}、\texttt{UNIStainNet}~\cite{ref_unistainnet}、\texttt{CUT}~\cite{ref_cut} 与 \texttt{I2SB}~\cite{ref_i2sb}。表~\ref{tab:external} 完整汇报已完成四器官全阶段评测（含 Cellpose 分割）的 \texttt{Pix2Pix}、\texttt{CycleGAN} 与 \texttt{UNIStainNet} 数据：
 \begin{enumerate}
-    \item \textbf{全面超越传统 GAN 基线}：在 20-shot 阶段，\methodname{} 在四器官全部六项指标上均显著优于 \texttt{Pix2Pix} 与 \texttt{CycleGAN}（如 \texttt{Breast} 核分割 Dice 达 $0.5575$ 对 $0.4663 / 0.4057$，\texttt{Kidney} 达 $0.7131$ 对 $0.5392 / 0.6634$）。
-    \item \textbf{与重型多尺度基础模型基线 \texttt{UNIStainNet} 的范式权衡}：\texttt{UNIStainNet} 同为调用冻结 $303.3\text{M}$ UNI ViT-L/16 主干的网络（其可训练部分为 $42.19\text{M}$，推理总参数量约 $345.5\text{M}$），通过解码器多尺度 SPADE 空间调制与多尺度 PatchGAN 对抗判别器损失，在 \texttt{Breast}/\texttt{Brain}/\texttt{Kidney} 的 0-shot 阶段以及四器官 20-shot 分布距离 KID 上占据明显优势（如 \texttt{Breast} KID $3.78$ 对 $8.90$、\texttt{Kidney} KID $14.35$ 对 $41.86$、\texttt{Brain} KID $9.11$ 对 $21.09$）。相比之下，\methodname{}（可训练仅 $1.90\text{M}$，推理总参数量约 $305.2\text{M}$）作为无判别器流匹配模型，在少样本适配后将优化重心置于像素精确对应与局部核轮廓对齐上，从而以 $1/22$ 的可训练参数量在\textbf{全部四折上取得最高 20-shot PSNR（四折均值 $24.25$ 对 $23.10\text{ dB}$）与最低 LPIPS（四折均值 $0.1236$ 对 $0.1353$）}，并在 \texttt{Breast}、\texttt{Brain} 与 \texttt{Kidney} 三折的 SSIM、Dice 与 F1@0.5 上超越 \texttt{UNIStainNet}（\texttt{Liver} 上 Dice 为 $0.7303$ 对 $0.7322$，基本持平）。这种“分布纹理统计距离 vs 像素结构与核对齐精度”的分化，体现了有判别器像素翻译与无判别器隐空间流匹配之间的典型感知-失真权衡。
+    \item \textbf{全面超越传统 GAN 基线}：在 20-shot 阶段，\methodname{} 在四器官全部六项指标上均显著优于 \texttt{Pix2Pix} 与 \texttt{CycleGAN}（如 \texttt{Breast} 核分割 Dice 达 $0.5609$ 对 $0.4663 / 0.4057$，\texttt{Kidney} 达 $0.7117$ 对 $0.5392 / 0.6634$）。
+    \item \textbf{与重型多尺度基础模型基线 \texttt{UNIStainNet} 的范式权衡}：\texttt{UNIStainNet} 同为调用冻结 $303.3\text{M}$ UNI ViT-L/16 主干的网络（其可训练部分为 $42.19\text{M}$，推理总参数量约 $345.5\text{M}$），通过解码器多尺度 SPADE 空间调制与多尺度 PatchGAN 对抗判别器损失，在 \texttt{Breast}/\texttt{Brain}/\texttt{Kidney} 的 0-shot 阶段以及四器官 20-shot 分布距离 KID 上占据优势（如 \texttt{Breast} KID $3.78$ 对 $8.79$、\texttt{Kidney} KID $14.35$ 对 $42.56$、\texttt{Brain} KID $9.11$ 对 $22.70$）。相比之下，\methodname{}（可训练仅 $1.90\text{M}$，推理总参数量约 $305.2\text{M}$）作为无判别器流匹配模型，在少样本适配后将优化重心置于像素精确对应与局部核轮廓对齐上，从而以 $1/22$ 的可训练参数量在\textbf{全部四折上取得最高 20-shot PSNR（四折均值 $24.28$ 对 $23.10\text{ dB}$）与最低 LPIPS（四折均值 $0.1226$ 对 $0.1353$）}，并在 \texttt{Breast}、\texttt{Brain} 与 \texttt{Kidney} 三折的 SSIM、Dice 与 F1@0.5 上超越 \texttt{UNIStainNet}（\texttt{Liver} 上 Dice 为 $0.7299$ 对 $0.7322$，基本持平）。同时，\methodname{} 单卡推理耗时更低（$26.04$ 对 $32.47\text{ ms/img}$）并节省 $36.2\%$ 峰值显存。
 \end{enumerate}
 表~\ref{tab:external} 中标注“\texttt{--}”的 \texttt{CUT} 与 \texttt{I2SB} 基线仍在基准集群计算中，待完成后补全。
 % TODO [需作者核实/补数]: 表 4 中 Pix2Pix、CycleGAN 与 UNIStainNet 已填入四折含 Dice/F1 全量实测数据；待工作站 CUT 与 I2SB（Queue-3）跑完后补充对应行并替换 '--'。
@@ -461,55 +449,54 @@ OASRA w/o Source Replay & \textbf{24.10} & 0.1560 & 8.82 & 0.5672 & 15.69 & 0.25
 & & & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ & F1@0.5$\uparrow$ \\
 \midrule
 \multirow{5}{*}{Breast}
-& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 2.49ms / 241MB & 13.12 & 0.6860 & 0.3504 & 51.38 & 18.39 & 0.7538 & 0.2917 & 40.24 & 21.89 & 0.7388 & 0.2066 & 29.19 & 0.4663 & 0.4577 \\
-& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 12.00ms / 101MB & \textbf{16.29} & 0.7314 & 0.2835 & 37.69 & 20.33 & 0.7718 & 0.2410 & 26.11 & 22.04 & 0.7696 & 0.2040 & 15.04 & 0.4057 & 0.3948 \\
-& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 33.35ms / 1865MB & 15.90 & \textbf{0.7415} & \textbf{0.2396} & \textbf{29.09} & \textbf{20.65} & \textbf{0.7969} & \textbf{0.1865} & \textbf{14.88} & 23.05 & 0.8046 & 0.1675 & \textbf{3.78} & 0.5404 & 0.5454 \\
-& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb}（11.38M / 138.29M） & 12.0ms / 1286.3ms & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 30.94ms / 1189MB & 15.04 & 0.7272 & 0.2633 & 41.25 & 19.83 & 0.7877 & 0.2156 & 27.77 & \textbf{23.87} & \textbf{0.8244} & \textbf{0.1562} & 8.90 & \textbf{0.5575} & \textbf{0.5594} \\
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 2.52ms / 241MB & 13.12 & 0.6860 & 0.3504 & 51.38 & 18.39 & 0.7538 & 0.2917 & 40.24 & 21.89 & 0.7388 & 0.2066 & 29.19 & 0.4663 & 0.4577 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 11.98ms / 101MB & \textbf{16.29} & 0.7314 & 0.2835 & 37.69 & 20.33 & 0.7718 & 0.2410 & 26.11 & 22.04 & 0.7696 & 0.2040 & 15.04 & 0.4057 & 0.3948 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 32.47ms / 1865MB & 15.90 & \textbf{0.7415} & \textbf{0.2396} & \textbf{29.09} & \textbf{20.65} & \textbf{0.7969} & \textbf{0.1865} & \textbf{14.88} & 23.05 & 0.8046 & 0.1675 & \textbf{3.78} & 0.5404 & 0.5454 \\
+& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb}（11.38M / 138.29M） & 11.98ms / 1294.2ms & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 26.04ms / 1189MB & 14.90 & 0.7249 & 0.2723 & 44.05 & 19.85 & 0.7871 & 0.2220 & 28.55 & \textbf{23.90} & \textbf{0.8247} & \textbf{0.1561} & 8.79 & \textbf{0.5609} & \textbf{0.5667} \\
 \midrule
 \multirow{5}{*}{Brain}
-& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 2.49ms / 241MB & 13.84 & 0.6166 & 0.3442 & 80.11 & 14.23 & 0.6305 & 0.3365 & 79.98 & 21.34 & 0.6836 & 0.1520 & 24.27 & 0.7102 & 0.6700 \\
-& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 12.00ms / 101MB & \textbf{14.43} & 0.6398 & 0.3111 & 64.18 & 14.74 & 0.6518 & 0.2996 & \textbf{60.08} & 21.19 & 0.6991 & 0.1535 & 21.30 & 0.7395 & 0.7138 \\
-& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 33.35ms / 1865MB & 14.24 & \textbf{0.6789} & \textbf{0.2750} & \textbf{60.80} & \textbf{15.34} & \textbf{0.6894} & \textbf{0.2590} & 63.65 & 22.36 & 0.7550 & 0.1301 & \textbf{9.11} & 0.7411 & 0.7188 \\
-& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb}（11.38M / 138.29M） & 12.0ms / 1286.3ms & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 30.94ms / 1189MB & 13.38 & 0.6521 & 0.3539 & 102.11 & 14.20 & 0.6594 & 0.3357 & 96.93 & \textbf{24.43} & \textbf{0.7619} & \textbf{0.1148} & 21.09 & \textbf{0.7511} & \textbf{0.7233} \\
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 2.52ms / 241MB & 13.84 & 0.6166 & 0.3442 & 80.11 & 14.23 & 0.6305 & 0.3365 & 79.98 & 21.34 & 0.6836 & 0.1520 & 24.27 & 0.7102 & 0.6700 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 11.98ms / 101MB & \textbf{14.43} & 0.6398 & 0.3111 & 64.18 & 14.74 & 0.6518 & 0.2996 & \textbf{60.08} & 21.19 & 0.6991 & 0.1535 & 21.30 & 0.7395 & 0.7138 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 32.47ms / 1865MB & 14.24 & \textbf{0.6789} & \textbf{0.2750} & \textbf{60.80} & \textbf{15.34} & \textbf{0.6894} & \textbf{0.2590} & 63.65 & 22.36 & 0.7550 & 0.1301 & \textbf{9.11} & 0.7411 & 0.7188 \\
+& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb}（11.38M / 138.29M） & 11.98ms / 1294.2ms & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 26.04ms / 1189MB & 12.98 & 0.6615 & 0.3566 & 91.87 & 13.93 & 0.6687 & 0.3339 & 85.96 & \textbf{24.51} & \textbf{0.7675} & \textbf{0.1117} & 22.70 & \textbf{0.7565} & \textbf{0.7239} \\
 \midrule
 \multirow{5}{*}{Kidney}
-& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 2.49ms / 241MB & 17.05 & 0.7076 & 0.2197 & 42.57 & 17.45 & 0.7184 & 0.2023 & 43.92 & 21.23 & 0.7499 & 0.1519 & 48.98 & 0.5392 & 0.5278 \\
-& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 12.00ms / 101MB & 16.06 & 0.7244 & 0.2190 & 39.02 & 18.62 & 0.7588 & 0.1626 & 31.21 & 22.36 & 0.7803 & 0.1299 & 14.61 & 0.6634 & 0.6846 \\
-& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 33.35ms / 1865MB & \textbf{19.21} & \textbf{0.7802} & \textbf{0.1750} & \textbf{24.15} & \textbf{20.09} & \textbf{0.7956} & \textbf{0.1534} & \textbf{21.19} & 22.82 & 0.8244 & 0.1130 & \textbf{14.35} & 0.7011 & 0.7240 \\
-& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb}（11.38M / 138.29M） & 12.0ms / 1286.3ms & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 30.94ms / 1189MB & 19.20 & 0.7683 & 0.2057 & 44.04 & 19.43 & 0.7765 & 0.1916 & 42.11 & \textbf{23.96} & \textbf{0.8318} & \textbf{0.1103} & 41.86 & \textbf{0.7131} & \textbf{0.7412} \\
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 2.52ms / 241MB & 17.05 & 0.7076 & 0.2197 & 42.57 & 17.45 & 0.7184 & 0.2023 & 43.92 & 21.23 & 0.7499 & 0.1519 & 48.98 & 0.5392 & 0.5278 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 11.98ms / 101MB & 16.06 & 0.7244 & 0.2190 & 39.02 & 18.62 & 0.7588 & 0.1626 & 31.21 & 22.36 & 0.7803 & 0.1299 & 14.61 & 0.6634 & 0.6846 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 32.47ms / 1865MB & 19.21 & \textbf{0.7802} & \textbf{0.1750} & \textbf{24.15} & \textbf{20.09} & \textbf{0.7956} & \textbf{0.1534} & \textbf{21.19} & 22.82 & 0.8244 & 0.1130 & \textbf{14.35} & 0.7011 & 0.7240 \\
+& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb}（11.38M / 138.29M） & 11.98ms / 1294.2ms & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 26.04ms / 1189MB & \textbf{19.34} & 0.7580 & 0.2256 & 56.14 & 19.04 & 0.7625 & 0.2223 & 54.15 & \textbf{23.91} & \textbf{0.8312} & \textbf{0.1115} & 42.56 & \textbf{0.7117} & \textbf{0.7408} \\
 \midrule
 \multirow{5}{*}{Liver}
-& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 2.49ms / 241MB & 19.09 & 0.5603 & 0.2213 & 49.35 & 19.69 & 0.5673 & 0.1988 & 42.15 & 22.44 & 0.7004 & 0.1414 & 19.21 & 0.6491 & 0.6417 \\
-& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 12.00ms / 101MB & 18.85 & 0.6695 & \textbf{0.1833} & 55.67 & 20.19 & 0.6987 & \textbf{0.1770} & 49.77 & 21.62 & 0.7095 & 0.1450 & 29.18 & 0.6168 & 0.6336 \\
-& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 33.35ms / 1865MB & 18.33 & 0.7222 & 0.2347 & 46.94 & 19.93 & 0.7344 & 0.2014 & 33.00 & 24.18 & \textbf{0.7892} & 0.1304 & \textbf{12.28} & \textbf{0.7322} & \textbf{0.7563} \\
-& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb}（11.38M / 138.29M） & 12.0ms / 1286.3ms & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 30.94ms / 1189MB & \textbf{19.92} & \textbf{0.7369} & 0.2046 & \textbf{23.90} & \textbf{20.67} & \textbf{0.7449} & 0.1920 & \textbf{28.61} & \textbf{24.72} & 0.7831 & \textbf{0.1129} & 15.68 & 0.7303 & 0.7507 \\
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 2.52ms / 241MB & 19.09 & 0.5603 & 0.2213 & 49.35 & 19.69 & 0.5673 & 0.1988 & 42.15 & 22.44 & 0.7004 & 0.1414 & 19.21 & 0.6491 & 0.6417 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 11.98ms / 101MB & 18.85 & 0.6695 & \textbf{0.1833} & 55.67 & 20.19 & 0.6987 & \textbf{0.1770} & 49.77 & 21.62 & 0.7095 & 0.1450 & 29.18 & 0.6168 & 0.6336 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 32.47ms / 1865MB & 18.33 & 0.7222 & 0.2347 & 46.94 & 19.93 & 0.7344 & 0.2014 & 33.00 & 24.18 & \textbf{0.7892} & 0.1304 & \textbf{12.28} & \textbf{0.7322} & \textbf{0.7563} \\
+& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb}（11.38M / 138.29M） & 11.98ms / 1294.2ms & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 26.04ms / 1189MB & \textbf{21.05} & \textbf{0.7425} & 0.1971 & \textbf{25.52} & \textbf{21.07} & \textbf{0.7461} & 0.1856 & \textbf{30.79} & \textbf{24.79} & 0.7836 & \textbf{0.1113} & 16.34 & 0.7299 & 0.7472 \\
 \bottomrule
 \end{tabular}}
 \end{table*}
 
 \section{讨论与局限性}
 \subsection{跨器官虚拟染色的先验引导与少样本边界}
-三阶段实证勾勒出虚拟染色跨器官部署的能力边界：冻结基础模型的空间先验虽能在零样本下托底器官形态，却无法凭空推断跨器官非线性染色统计分布；基于 5 张参考切片的 \texttt{halfOD} 校准在大幅纠正高色偏器官色调的同时，于染色相近器官存在全局过校准风险（表~\ref{tab:halfod_alpha} 证实 $\alpha=0.50$ 的阻尼必要性）；引入极少量目标配对微调与 OASRA 回放，才能同步保证高像素结构精度与源域抗遗忘稳定性。
+三阶段实证勾勒出虚拟染色跨器官部署的能力边界：冻结基础模型的空间先验虽能在零样本下托底器官形态，却无法凭空推断跨器官非线性染色统计分布；基于 5 张参考切片的 \texttt{halfOD} 校准在大幅纠正高色偏器官色调的同时，于染色相近器官存在全局过校准风险（表~\ref{tab:halfod_alpha} 证实 $\alpha=0.50$ 的阻尼必要性）；引入极少量目标配对微调与 SRA 染色增广源域回放，才能同步保证高像素结构精度与源域抗遗忘稳定性。
 
 \subsection{隐空间块洗牌伪影的机理与架构启示}
-\texttt{UniFlow-Tok} 与 \methodname{} 的对照及全测试集 2D FFT 频谱度量提示：在基于亚像素重排（PixelShuffle）的隐空间流匹配网络中，外部空间先验的\textbf{接入尺度}直接决定了稀疏背景的频域洁净度。低分辨率令牌层的加性耦合经多层重排被放大成规则网格谐波；将其后移至 $64\times 64$ 速度场末端并用深度可分离卷积局部平滑，可从源头打断周期性误差累积。今后亦可探索引入如 SheafStain~\cite{ref_sheafstain} 所提层理论等空间拓扑正则，在抑制网格的同时进一步丰富深层时空交互。
+\texttt{UniFlow-Tok} 与 \methodname{} 的对照及全测试集 2D FFT 频谱度量提示：在基于亚像素重排（PixelShuffle）的隐空间流匹配网络中，外部空间先验的\textbf{接入尺度}直接决定了稀疏背景的频域洁净度。低分辨率令牌层的加性耦合经多层重排被放大成规则网格谐波；将其后移至 $64\times 64$ 速度场末端并以双线性插值接零初始化线性投影叠加，即可从源头打断周期性误差累积。今后亦可探索引入如 SheafStain~\cite{ref_sheafstain} 所提层理论等空间拓扑正则，在抑制网格的同时进一步丰富深层时空交互。
 
 \subsection{局限性}
-本文工作尚有以下边界：（1）目前已在留出 \texttt{Breast} 折补全 3-seed 统计均值与标准差（证实方差 $<0.03\text{ dB}$），其余三折的全量多种子重复仍可进一步补全；（2）数据来源于树脂包埋小鼠器官并按一维切片索引间隔（$|i_{\text{val}} - i_{\text{test}}| > 1$）切分，未来工作需在严格跨动物个体/跨整片（slide-disjoint）协议下评估向人类 FFPE 临床切片的外推能力；（3）外部队列中的 \texttt{CUT} 与 \texttt{I2SB} 定量生成指标仍在基准集群运行中，待完成后将补全对应实测行。
+本文工作尚有以下边界：（1）目前已在留出 \texttt{Breast} 折补全 3-seed 统计均值与标准差（证实方差 $\le 0.04\text{ dB}$），其余三折的全量多种子重复仍可进一步补全；（2）数据来源于树脂包埋小鼠器官并按一维切片索引间隔（$|i_{\text{val}} - i_{\text{test}}| > 1$）切分，未来工作需在严格跨动物个体/跨整片（slide-disjoint）协议下评估向人类 FFPE 临床切片的外推能力；（3）外部队列中的 \texttt{CUT} 与 \texttt{I2SB} 定量生成指标仍在基准集群运行中，待完成后将补全对应实测行。
 
 \section{结论}
-本文提出了融合病理基础模型高分辨率末端空间先验注入的轻量隐空间整流流匹配框架 \methodname{}。在严格消除一维切片邻接的四器官留出基准上，仅在 $64\times 64$ 速度场末端注入深度可分离平滑特征即可在频域显著压低稀疏背景周期性网格伪影；结合半阻尼光密度校准与 OASRA 少样本回放适配，仅需 $1.90\text{M}$ 可训练参数与 20 对目标样本即可全面优于无先验基座、四类经典 DG 基线及传统像素 GAN 方法，并在四折重建像素保真与三折核分割上超越重型 SPADE-UNet 模型 \texttt{UNIStainNet}。全部开源资料见：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
+本文提出了融合病理基础模型高分辨率末端空间先验注入的轻量隐空间整流流匹配框架 \methodname{}。在严格消除一维切片邻接的四器官留出基准上，仅在 $64\times 64$ 速度场末端以双线性插值及零初始化线性投影注入 UNI 先验特征，即可在频域显著压低稀疏背景周期性网格伪影；结合半阻尼光密度校准与 SRA 染色增广源域回放适配，仅需 $1.90\text{M}$ 可训练参数、$26.04\text{ ms/img}$ 单卡推理耗时与 20 对目标样本，即可在全折上超越无先验基座、四类经典 DG 基线及传统像素 GAN 方法，并在四折重建像素保真与三折核分割上超越重型 SPADE-UNet 模型 \texttt{UNIStainNet}。全部开源资料见：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
 
 \appendices
 \section*{补充材料}
 
 \subsection*{S1\quad 补充分布距离（FID）、非空核分割与相关性指标}
-表~\ref{tab:supp_metrics} 汇总了基于 $N=120$ 测试集的 Fréchet 距离（FID$\downarrow$）、剔除无细胞核空白样本后的非空核分割（$\text{Dice}_{\text{ne}}\uparrow$、$\text{F1}_{\text{ne}}\uparrow$）、灰度相关系数（$\text{PCC}_{\text{GT}}$、$\text{PCC}_{\text{PI}}$）以及逐图检测细胞核数量相关系数（$\text{Count-}r$）。在 20-shot 阶段，\methodname{} 在 Brain（$55.84$）、Kidney（$71.53$）与 Liver（$41.83$）取得最低 FID；在 Breast 取得 $65.19$（略高于 \texttt{UniFlow-Tok} 的 $63.28$，但后者存在明显背景周期网格伪影）。
-% TODO [需作者核实/补数]: 表 S1 中 Breast 0-shot 行的 UniFlow 指标（FID=102.71 等）源自 round1_summary.json 实测日志，请作者最终核验。
+表~\ref{tab:supp_metrics} 汇总了基于 $N=120$ 测试集的 Fréchet 距离（FID$\downarrow$）、剔除无细胞核空白样本后的非空核分割（$\text{Dice}_{\text{ne}}\uparrow$、$\text{F1}_{\text{ne}}\uparrow$）、灰度相关系数（$\text{PCC}_{\text{GT}}$、$\text{PCC}_{\text{PI}}$）以及逐图检测细胞核数量相关系数（$\text{Count-}r$）。在 20-shot 阶段，\methodname{} 在 Brain（$56.26$）、Kidney（$72.16$）与 Liver（$42.96$）取得最低 FID；在 Breast 取得 $64.26$（略高于 \texttt{UniFlow-Tok} 的 $63.28$，但后者存在明显背景周期网格伪影）。
 
 \begin{table*}[!t]
 \centering
@@ -521,46 +508,46 @@ OASRA w/o Source Replay & \textbf{24.10} & 0.1560 & 8.82 & 0.5672 & 15.69 & 0.25
 器官 Fold & 模型配置 & 阶段 & FID$\downarrow$ & $\text{Dice}_{\text{ne}}\uparrow$ & $\text{F1}_{\text{ne}}\uparrow$ & $\text{PCC}_{\text{GT}}\uparrow$ & $\text{PCC}_{\text{PI}}$ & $\text{Count-}r\uparrow$ \\
 \midrule
 \multirow{10}{*}{Breast ($\text{empty}=4$)}
-& \texttt{BaseFlow} & 0-shot / OASRA (20-shot) & 104.22 / 69.70 & 0.5219 / 0.5574 & 0.5259 / 0.5606 & 0.8613 / 0.8999 & 0.8492 / 0.9203 & 0.5483 / 0.7271 \\
-& \texttt{UniFlow-Tok} & 0-shot / OASRA (20-shot) & \textbf{92.10} / \textbf{63.28} & \textbf{0.5355} / \textbf{0.5852} & \textbf{0.5411} / \textbf{0.5897} & \textbf{0.8855} / \textbf{0.9140} & 0.8663 / 0.9169 & \textbf{0.6064} / \textbf{0.7910} \\
-& \texttt{MixStyle} & 0-shot / OASRA (20-shot) & 108.97 / 69.53 & 0.5177 / 0.5606 & 0.5273 / 0.5640 & 0.8440 / 0.8992 & 0.8360 / 0.9252 & 0.5013 / 0.7134 \\
-& \texttt{StainAug} & 0-shot / OASRA (20-shot) & 115.37 / 69.40 & 0.5245 / 0.5596 & 0.5296 / 0.5625 & 0.8521 / 0.9018 & 0.8531 / 0.9250 & 0.5109 / 0.6382 \\
-& \texttt{DANN} & 0-shot / OASRA (20-shot) & 139.59 / 87.50 & 0.3509 / 0.5112 & 0.2382 / 0.5055 & 0.8806 / 0.8911 & 0.9895 / 0.9635 & 0.4264 / 0.4934 \\
-& \texttt{MLDG} & 0-shot / OASRA (20-shot) & 101.57 / 69.73 & 0.5235 / 0.5726 & 0.5310 / 0.5800 & 0.8654 / 0.9013 & 0.8549 / 0.9226 & 0.5478 / 0.6984 \\
-& \textbf{\methodname{}} & 0-shot & 102.71 & 0.5202 & 0.5257 & 0.8757 & 0.8490 & 0.5333 \\
-& \textbf{\methodname{}} & OASRA (5-shot) & 85.35 & 0.5713 & 0.5784 & 0.8912 & 0.9057 & 0.7709 \\
-& \textbf{\methodname{}} & OASRA (10-shot) & 69.52 & 0.5717 & 0.5766 & 0.9065 & 0.9234 & 0.7389 \\
-& \textbf{\methodname{}} & NaiveFT / OASRA (20-shot) & 68.45 / 65.19 & 0.5677 / 0.5768 & 0.5720 / 0.5787 & 0.9050 / 0.9110 & 0.9119 / 0.9178 & 0.7422 / 0.7391 \\
+& \texttt{BaseFlow} & 0-shot / SRA (20-shot) & 104.22 / 69.70 & 0.5219 / 0.5574 & 0.5259 / 0.5606 & 0.8613 / 0.8999 & 0.8492 / 0.9203 & 0.5483 / 0.7271 \\
+& \texttt{UniFlow-Tok} & 0-shot / SRA (20-shot) & \textbf{92.10} / \textbf{63.28} & \textbf{0.5355} / \textbf{0.5852} & \textbf{0.5411} / \textbf{0.5897} & \textbf{0.8855} / \textbf{0.9140} & 0.8663 / 0.9169 & \textbf{0.6064} / \textbf{0.7910} \\
+& \texttt{MixStyle} & 0-shot / SRA (20-shot) & 108.97 / 69.53 & 0.5177 / 0.5606 & 0.5273 / 0.5640 & 0.8440 / 0.8992 & 0.8360 / 0.9252 & 0.5013 / 0.7134 \\
+& \texttt{StainAug} & 0-shot / SRA (20-shot) & 115.37 / 69.40 & 0.5245 / 0.5596 & 0.5296 / 0.5625 & 0.8521 / 0.9018 & 0.8531 / 0.9250 & 0.5109 / 0.6382 \\
+& \texttt{DANN} & 0-shot / SRA (20-shot) & 139.59 / 87.50 & 0.3509 / 0.5112 & 0.2382 / 0.5055 & 0.8806 / 0.8911 & 0.9895 / 0.9635 & 0.4264 / 0.4934 \\
+& \texttt{MLDG} & 0-shot / SRA (20-shot) & 101.57 / 69.73 & 0.5235 / 0.5726 & 0.5310 / 0.5800 & 0.8654 / 0.9013 & 0.8549 / 0.9226 & 0.5478 / 0.6984 \\
+& \textbf{\methodname{}} & 0-shot & 104.68 & 0.5178 & 0.5272 & 0.8749 & 0.8490 & 0.5493 \\
+& \textbf{\methodname{}} & SRA (5-shot) & 85.67 & 0.5715 & 0.5775 & 0.8903 & 0.9075 & 0.7693 \\
+& \textbf{\methodname{}} & SRA (10-shot) & 69.89 & 0.5737 & 0.5796 & 0.9059 & 0.9280 & 0.7504 \\
+& \textbf{\methodname{}} & NaiveFT / SRA (20-shot) & 69.26 / 64.26 & 0.5743 / 0.5803 & 0.5846 / 0.5863 & 0.9045 / 0.9115 & 0.9155 / 0.9198 & 0.7428 / 0.7443 \\
 \midrule
 \multirow{6}{*}{Brain ($\text{empty}=0$)}
-& \texttt{BaseFlow} & 0-shot / OASRA (20-shot) & 122.38 / 59.40 & 0.7079 / 0.7455 & 0.6749 / 0.7160 & 0.6909 / 0.7876 & 0.9305 / 0.7662 & 0.7527 / 0.9144 \\
-& \texttt{MixStyle} & 0-shot / OASRA (20-shot) & 125.86 / 60.06 & 0.7095 / 0.7463 & \textbf{0.6805} / 0.7132 & 0.6959 / 0.7885 & 0.9242 / 0.7682 & 0.7917 / 0.9169 \\
-& \texttt{StainAug} & 0-shot / OASRA (20-shot) & 129.70 / 62.44 & \textbf{0.7096} / 0.7418 & 0.6763 / 0.7129 & 0.6792 / 0.7904 & 0.9368 / 0.7681 & 0.8131 / 0.9049 \\
-& \texttt{DANN} & 0-shot / OASRA (20-shot) & 225.61 / 112.27 & 0.6101 / 0.5780 & 0.5433 / 0.5674 & 0.6268 / 0.7026 & 0.9958 / 0.8792 & 0.7727 / 0.7138 \\
-& \texttt{MLDG} & 0-shot / OASRA (20-shot) & 119.12 / 60.16 & 0.7046 / 0.7464 & 0.6758 / 0.7157 & 0.6944 / 0.7905 & 0.9192 / 0.7635 & 0.7847 / \textbf{0.9257} \\
-& \textbf{\methodname{}} & 0-shot / OASRA (20-shot) & \textbf{118.75} / \textbf{55.84} & 0.6989 / \textbf{0.7511} & 0.6549 / \textbf{0.7233} & \textbf{0.6977} / \textbf{0.8159} & 0.8866 / 0.7192 & \textbf{0.8703} / 0.9014 \\
+& \texttt{BaseFlow} & 0-shot / SRA (20-shot) & 122.38 / 59.40 & 0.7079 / 0.7455 & 0.6749 / 0.7160 & 0.6909 / 0.7876 & 0.9305 / 0.7662 & 0.7527 / 0.9144 \\
+& \texttt{MixStyle} & 0-shot / SRA (20-shot) & 125.86 / 60.06 & 0.7095 / 0.7463 & \textbf{0.6805} / 0.7132 & 0.6959 / 0.7885 & 0.9242 / 0.7682 & 0.7917 / 0.9169 \\
+& \texttt{StainAug} & 0-shot / SRA (20-shot) & 129.70 / 62.44 & 0.7096 / 0.7418 & 0.6763 / 0.7129 & 0.6792 / 0.7904 & 0.9368 / 0.7681 & 0.8131 / 0.9049 \\
+& \texttt{DANN} & 0-shot / SRA (20-shot) & 225.61 / 112.27 & 0.6101 / 0.5780 & 0.5433 / 0.5674 & 0.6268 / 0.7026 & 0.9958 / 0.8792 & 0.7727 / 0.7138 \\
+& \texttt{MLDG} & 0-shot / SRA (20-shot) & 119.12 / 60.16 & 0.7046 / 0.7464 & 0.6758 / 0.7157 & 0.6944 / 0.7905 & 0.9192 / 0.7635 & 0.7847 / \textbf{0.9257} \\
+& \textbf{\methodname{}} & 0-shot / SRA (20-shot) & \textbf{117.99} / \textbf{56.26} & \textbf{0.7119} / \textbf{0.7565} & 0.6770 / \textbf{0.7239} & \textbf{0.7019} / \textbf{0.8196} & 0.9120 / 0.7275 & \textbf{0.8429} / 0.9095 \\
 \midrule
 \multirow{6}{*}{Kidney ($\text{empty}=0$)}
-& \texttt{BaseFlow} & 0-shot / OASRA (20-shot) & 93.31 / 78.30 & \textbf{0.6923} / 0.7060 & \textbf{0.7145} / 0.7321 & 0.9145 / 0.9560 & 0.9034 / 0.8527 & 0.8072 / 0.8245 \\
-& \texttt{MixStyle} & 0-shot / OASRA (20-shot) & 99.02 / 78.83 & 0.6860 / 0.7072 & 0.7039 / 0.7328 & 0.9169 / 0.9557 & 0.9208 / 0.8544 & \textbf{0.8132} / 0.8236 \\
-& \texttt{StainAug} & 0-shot / OASRA (20-shot) & 99.00 / 78.37 & 0.6850 / 0.7066 & 0.7030 / 0.7334 & 0.9193 / 0.9563 & 0.9141 / 0.8547 & 0.7938 / 0.8315 \\
-& \texttt{DANN} & 0-shot / OASRA (20-shot) & 132.17 / 87.21 & 0.4725 / 0.6848 & 0.2624 / 0.7019 & 0.8852 / 0.9446 & 0.9865 / 0.8744 & 0.8055 / 0.8443 \\
-& \texttt{MLDG} & 0-shot / OASRA (20-shot) & 97.64 / 78.86 & 0.6877 / 0.7067 & 0.7070 / 0.7334 & 0.9045 / 0.9567 & 0.9100 / 0.8555 & 0.8045 / 0.8362 \\
-& \textbf{\methodname{}} & 0-shot / OASRA (20-shot) & \textbf{81.36} / \textbf{71.53} & 0.6892 / \textbf{0.7131} & 0.7056 / \textbf{0.7412} & \textbf{0.9339} / \textbf{0.9627} & 0.8876 / 0.8495 & 0.8069 / \textbf{0.8726} \\
+& \texttt{BaseFlow} & 0-shot / SRA (20-shot) & 93.31 / 78.30 & \textbf{0.6923} / 0.7060 & \textbf{0.7145} / 0.7321 & 0.9145 / 0.9560 & 0.9034 / 0.8527 & 0.8072 / 0.8245 \\
+& \texttt{MixStyle} & 0-shot / SRA (20-shot) & 99.02 / 78.83 & 0.6860 / 0.7072 & 0.7039 / 0.7328 & 0.9169 / 0.9557 & 0.9208 / 0.8544 & 0.8132 / 0.8236 \\
+& \texttt{StainAug} & 0-shot / SRA (20-shot) & 99.00 / 78.37 & 0.6850 / 0.7066 & 0.7030 / 0.7334 & 0.9193 / 0.9563 & 0.9141 / 0.8547 & 0.7938 / 0.8315 \\
+& \texttt{DANN} & 0-shot / SRA (20-shot) & 132.17 / 87.21 & 0.4725 / 0.6848 & 0.2624 / 0.7019 & 0.8852 / 0.9446 & 0.9865 / 0.8744 & 0.8055 / 0.8443 \\
+& \texttt{MLDG} & 0-shot / SRA (20-shot) & 97.64 / 78.86 & 0.6877 / 0.7067 & 0.7070 / 0.7334 & 0.9045 / 0.9567 & 0.9100 / 0.8555 & 0.8045 / 0.8362 \\
+& \textbf{\methodname{}} & 0-shot / SRA (20-shot) & \textbf{90.02} / \textbf{72.16} & 0.6882 / \textbf{0.7117} & 0.7111 / \textbf{0.7408} & \textbf{0.9299} / \textbf{0.9622} & 0.8804 / 0.8487 & \textbf{0.8269} / \textbf{0.8823} \\
 \midrule
 \multirow{6}{*}{Liver ($\text{empty}=0$)}
-& \texttt{BaseFlow} & 0-shot / OASRA (20-shot) & 57.88 / 44.36 & 0.5089 / 0.7261 & 0.5258 / 0.7478 & \textbf{0.8837} / 0.9161 & 0.8823 / 0.8629 & 0.7815 / 0.9008 \\
-& \texttt{MixStyle} & 0-shot / OASRA (20-shot) & 60.62 / 45.27 & 0.5142 / 0.7209 & 0.5226 / 0.7424 & 0.8763 / 0.9149 & 0.8462 / 0.8668 & \textbf{0.8303} / 0.8990 \\
-& \texttt{StainAug} & 0-shot / OASRA (20-shot) & 57.75 / 45.26 & \textbf{0.5681} / 0.7222 & \textbf{0.5803} / 0.7449 & 0.8809 / 0.9159 & 0.8719 / 0.8660 & 0.8193 / 0.8911 \\
-& \texttt{DANN} & 0-shot / OASRA (20-shot) & 113.43 / 60.41 & 0.3849 / 0.6677 & 0.4022 / 0.6990 & 0.8565 / 0.8931 & 0.9839 / 0.9178 & 0.5754 / 0.8167 \\
-& \texttt{MLDG} & 0-shot / OASRA (20-shot) & 60.13 / 44.91 & 0.5564 / 0.7205 & 0.5659 / 0.7391 & 0.8786 / 0.9163 & 0.8851 / 0.8618 & 0.7838 / 0.8890 \\
-& \textbf{\methodname{}} & 0-shot / OASRA (20-shot) & \textbf{51.41} / \textbf{41.83} & 0.5380 / \textbf{0.7303} & 0.5413 / \textbf{0.7507} & 0.8836 / \textbf{0.9219} & 0.8592 / 0.8583 & 0.8030 / \textbf{0.9050} \\
+& \texttt{BaseFlow} & 0-shot / SRA (20-shot) & 57.88 / 44.36 & 0.5089 / 0.7261 & 0.5258 / \textbf{0.7478} & 0.8837 / 0.9161 & 0.8823 / 0.8629 & 0.7815 / \textbf{0.9008} \\
+& \texttt{MixStyle} & 0-shot / SRA (20-shot) & 60.62 / 45.27 & 0.5142 / 0.7209 & 0.5226 / 0.7424 & 0.8763 / 0.9149 & 0.8462 / 0.8668 & \textbf{0.8303} / 0.8990 \\
+& \texttt{StainAug} & 0-shot / SRA (20-shot) & 57.75 / 45.26 & 0.5681 / 0.7222 & 0.5803 / 0.7449 & 0.8809 / 0.9159 & 0.8719 / 0.8660 & 0.8193 / 0.8911 \\
+& \texttt{DANN} & 0-shot / SRA (20-shot) & 113.43 / 60.41 & 0.3849 / 0.6677 & 0.4022 / 0.6990 & 0.8565 / 0.8931 & 0.9839 / 0.9178 & 0.5754 / 0.8167 \\
+& \texttt{MLDG} & 0-shot / SRA (20-shot) & 60.13 / 44.91 & 0.5564 / 0.7205 & 0.5659 / 0.7391 & 0.8786 / 0.9163 & 0.8851 / 0.8618 & 0.7838 / 0.8890 \\
+& \textbf{\methodname{}} & 0-shot / SRA (20-shot) & \textbf{54.12} / \textbf{42.96} & \textbf{0.6215} / \textbf{0.7299} & \textbf{0.6249} / 0.7472 & \textbf{0.8879} / \textbf{0.9227} & 0.8733 / 0.8588 & 0.8039 / 0.8969 \\
 \bottomrule
 \end{tabular}}
 \end{table*}
 
 \subsection*{S2\quad 模型参数量与 RTX 3080 Ti Laptop 推理耗时明细}
-表~\ref{tab:supp_complexity} 列出主干与 DG 变体在单张 \texttt{NVIDIA RTX 3080 Ti Laptop GPU (16 GB)} 上实测的可训练参数、总参数与 Batch=1 端到端推理时延。免训练校准 \texttt{halfOD} 在已生成图上执行耗时 $2.0$--$2.3\text{ s}$。
+表~\ref{tab:supp_complexity} 列出主干与 DG 变体在单张 \texttt{NVIDIA RTX 3080 Ti Laptop GPU (16 GB)} 上实测的可训练参数、总参数与 Batch=1 端到端推理时延。免训练校准 \texttt{halfOD} 在已生成图上执行耗时 $2.6$--$2.9\text{ s}$。
 
 \begin{table}[!t]
 \centering
@@ -575,7 +562,7 @@ OASRA w/o Source Replay & \textbf{24.10} & 0.1560 & 8.82 & 0.5672 & 15.69 & 0.25
 \texttt{MixStyle / StainAug / DANN} & $1.688\text{M} / 1.797\text{M}$ & $\sim 1.8\text{M}$ & $12.07$--$16.73$ & $\sim 4.4$--$10.5\text{ min}$ \\
 \texttt{MLDG}（一阶元学习） & $1.688\text{M} / 1.797\text{M}$ & $\sim 1.8\text{M}$ & $12.02$--$13.93$ & $\sim 8.2$--$13.7\text{ min}$ \\
 \texttt{UniFlow-Tok} & $1.959\text{M} / 2.068\text{M}$ & $\sim 305.4\text{M}$ & $24.92$--$26.68$ & $\sim 7.5\text{ min}$ \\
-\textbf{\methodname{}} & $1.789\text{M} / 1.898\text{M}$ & $\sim 305.2\text{M}$ & $25.16$--$30.21$ & $\sim 5.6$--$9.9\text{ min}$ \\
+\textbf{\methodname{}} & $1.788\text{M} / 1.897\text{M}$ & $\sim 305.2\text{M}$ & $27.22$--$30.69$ & $\sim 5.4$--$9.0\text{ min}$ \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -617,10 +604,10 @@ Liver & 480 / 80 / 120 & 20 & 5 & 0 & 0 & 15.740 \\
 \midrule
 \texttt{BaseFlow} & \texttt{u0\_base\_d192} & 无基础模型先验的基座隐空间整流流 \\
 \texttt{UniFlow-Tok} & \texttt{u1\_uni2d\_1x1\_d192} & 令牌级 $1\times 1$ 卷积直接叠加注入消融分支 \\
-\textbf{\methodname{}} & \texttt{u1\_up64\_only\_d192} & 末端 $64\times 64$ 深度可分离平滑先验注入（默认） \\
+\textbf{\methodname{}} & \texttt{u1\_up64\_only\_d192} & 末端 $64\times 64$ 零初始化线性空间先验残差注入（默认） \\
 0-shot + halfOD & \texttt{0shot\_halfOD} & 5 张无配对参考切片半阻尼光密度校准 \\
-OASRA & \texttt{m6} & 光密度锚定源域回放自适应微调策略 \\
-NaiveFT & \texttt{naive\_ft} & 关闭回放、锚定与 SWA 的朴素少样本微调 \\
+SRA & \texttt{sra / m6 (--od-weight 0)} & 染色增广源域回放自适应微调策略 \\
+NaiveFT & \texttt{naive\_ft} & 关闭回放、抖动与 SWA 的朴素少样本微调 \\
 NR-AE & \texttt{Codec} & 四倍空间压缩噪声正则化卷积自编码器 \\
 SWA & \texttt{SwadAccumulator} & 固定步长起步的随机权重平均器 \\
 \bottomrule

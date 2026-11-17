@@ -132,7 +132,6 @@ class ModularUniFlow(nn.Module):
         elif uni_mode == 'up64_only':
             hi_dim = dim // 2
             self.uni_hi_1x1 = nn.Sequential(nn.Conv2d(1024, hi_dim, 1), nn.SiLU())
-            self.uni_hi_dw = nn.Conv2d(hi_dim, hi_dim, 3, padding=1, groups=hi_dim, padding_mode='replicate')
             self.uni_hi_zero = nn.Conv2d(hi_dim, 12, 1)
             nn.init.zeros_(self.uni_hi_zero.weight)
             nn.init.zeros_(self.uni_hi_zero.bias)
@@ -199,7 +198,7 @@ class ModularUniFlow(nn.Module):
         vel = self._decode_head(hidden[:, :n_tok])
         if self.uni_mode == 'up64_only' and u_14 is not None:
             u_hi = F.interpolate(self.uni_hi_1x1(u_14), size=(64, 64), mode='bilinear', align_corners=False)
-            vel = vel + self.uni_hi_zero(F.silu(self.uni_hi_dw(u_hi)))
+            vel = vel + self.uni_hi_zero(u_hi)
         return vel
 
 

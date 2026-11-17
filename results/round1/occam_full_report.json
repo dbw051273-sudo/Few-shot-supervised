@@ -1,0 +1,627 @@
+{
+  "updated_at": "2026-11-18T01:37:22.143545",
+  "alpha_scan": {
+    "Breast": {
+      "0.00": 14.9,
+      "0.25": 17.22,
+      "0.50": 19.85,
+      "0.75": 22.07,
+      "1.00": 22.41
+    },
+    "Brain": {
+      "0.00": 12.98,
+      "0.25": 13.47,
+      "0.50": 13.93,
+      "0.75": 14.33,
+      "1.00": 14.66
+    },
+    "Kidney": {
+      "0.00": 19.34,
+      "0.25": 19.31,
+      "0.50": 19.04,
+      "0.75": 18.59,
+      "1.00": 18.0
+    },
+    "liver": {
+      "0.00": 21.05,
+      "0.25": 21.22,
+      "0.50": 21.07,
+      "0.75": 20.65,
+      "1.00": 20.04
+    },
+    "Mean": {
+      "0.00": 17.07,
+      "0.25": 17.8,
+      "0.50": 18.47,
+      "0.75": 18.91,
+      "1.00": 18.78
+    }
+  },
+  "fft_table": {
+    "GT": {
+      "bg_lap": 2.86,
+      "fft_16px": 3.89,
+      "fft_harm": 2.83,
+      "n_patches": 227
+    },
+    "BaseFlow_0shot": {
+      "bg_lap": 3.78,
+      "fft_16px": 5.8,
+      "fft_harm": 4.35,
+      "n_patches": 227
+    },
+    "BaseFlow_halfOD": {
+      "bg_lap": 3.8,
+      "fft_16px": 6.11,
+      "fft_harm": 4.66,
+      "n_patches": 227
+    },
+    "BaseFlow_20shot": {
+      "bg_lap": 1.64,
+      "fft_16px": 6.08,
+      "fft_harm": 4.05,
+      "n_patches": 227
+    },
+    "UniFlowTok_0shot": {
+      "bg_lap": 4.88,
+      "fft_16px": 5.84,
+      "fft_harm": 5.1,
+      "n_patches": 227
+    },
+    "UniFlowTok_halfOD": {
+      "bg_lap": 4.32,
+      "fft_16px": 5.89,
+      "fft_harm": 5.32,
+      "n_patches": 227
+    },
+    "UniFlowTok_20shot": {
+      "bg_lap": 2.7,
+      "fft_16px": 5.9,
+      "fft_harm": 4.34,
+      "n_patches": 227
+    },
+    "UniFlow_0shot": {
+      "bg_lap": 3.99,
+      "fft_16px": 5.82,
+      "fft_harm": 4.44,
+      "n_patches": 227
+    },
+    "UniFlow_halfOD": {
+      "bg_lap": 3.75,
+      "fft_16px": 6.2,
+      "fft_harm": 4.98,
+      "n_patches": 227
+    },
+    "UniFlow_5shot": {
+      "bg_lap": 2.23,
+      "fft_16px": 6.43,
+      "fft_harm": 4.55,
+      "n_patches": 227
+    },
+    "UniFlow_10shot": {
+      "bg_lap": 2.0,
+      "fft_16px": 5.2,
+      "fft_harm": 3.43,
+      "n_patches": 227
+    },
+    "UniFlow_NaiveFT": {
+      "bg_lap": 2.08,
+      "fft_16px": 6.96,
+      "fft_harm": 4.96,
+      "n_patches": 227
+    },
+    "UniFlow_20shot": {
+      "bg_lap": 1.96,
+      "fft_16px": 4.86,
+      "fft_harm": 3.37,
+      "n_patches": 227
+    }
+  },
+  "ntn_summary": {
+    "Breast__u0_base_d192__0shot": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u0_base_d192__0shot_halfOD": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u0_base_d192__m6_k20": {
+      "empty_total": 4,
+      "n_TN": 1,
+      "files": [
+        "file_3849.png"
+      ]
+    },
+    "Breast__u1_uni2d_1x1_d192__0shot": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u1_uni2d_1x1_d192__0shot_halfOD": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u1_uni2d_1x1_d192__m6_k20": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u1_up64_only_d192__0shot": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u1_up64_only_d192__0shot_halfOD": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u1_up64_only_d192__m6_k10": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u1_up64_only_d192__m6_k20": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u1_up64_only_d192__m6_k5": {
+      "empty_total": 4,
+      "n_TN": 0,
+      "files": []
+    },
+    "Breast__u1_up64_only_d192__naive_ft_k20": {
+      "empty_total": 4,
+      "n_TN": 1,
+      "files": [
+        "file_3849.png"
+      ]
+    }
+  },
+  "wilcoxon": {
+    "Breast_20shot_vs_BaseFlow": {
+      "psnr": {
+        "mean_a": 23.8997,
+        "mean_b": 23.038,
+        "pval": 1.9085459722776476e-08
+      },
+      "ssim": {
+        "mean_a": 0.8247,
+        "mean_b": 0.8142,
+        "pval": 1.5388038601552676e-12
+      },
+      "lpips": {
+        "mean_a": 0.1561,
+        "mean_b": 0.1732,
+        "pval": 8.512438135778125e-15
+      },
+      "nuclei_dice": {
+        "mean_a": 0.5609,
+        "mean_b": 0.5471,
+        "pval": 0.017693607195548803
+      },
+      "nuclei_f1_05": {
+        "mean_a": 0.5667,
+        "mean_b": 0.5503,
+        "pval": 0.029685007955647963
+      }
+    },
+    "Breast_0shot_vs_BaseFlow": {
+      "psnr": {
+        "mean_a": 14.8999,
+        "mean_b": 14.8902,
+        "pval": 0.7119335326184926
+      },
+      "ssim": {
+        "mean_a": 0.7249,
+        "mean_b": 0.7194,
+        "pval": 0.01908390911510335
+      },
+      "lpips": {
+        "mean_a": 0.2723,
+        "mean_b": 0.2887,
+        "pval": 2.3015735814385934e-09
+      },
+      "nuclei_dice": {
+        "mean_a": 0.5005,
+        "mean_b": 0.5045,
+        "pval": 0.932904811311835
+      },
+      "nuclei_f1_05": {
+        "mean_a": 0.5096,
+        "mean_b": 0.5084,
+        "pval": 0.5522855554435169
+      }
+    },
+    "Brain_20shot_vs_BaseFlow": {
+      "psnr": {
+        "mean_a": 24.5134,
+        "mean_b": 23.769,
+        "pval": 2.0843111526818637e-05
+      },
+      "ssim": {
+        "mean_a": 0.7675,
+        "mean_b": 0.7585,
+        "pval": 1.851814195240476e-15
+      },
+      "lpips": {
+        "mean_a": 0.1117,
+        "mean_b": 0.1265,
+        "pval": 6.921986984171336e-15
+      },
+      "nuclei_dice": {
+        "mean_a": 0.7565,
+        "mean_b": 0.7455,
+        "pval": 2.557530030697936e-06
+      },
+      "nuclei_f1_05": {
+        "mean_a": 0.7239,
+        "mean_b": 0.716,
+        "pval": 0.027724375367569578
+      }
+    },
+    "Brain_0shot_vs_BaseFlow": {
+      "psnr": {
+        "mean_a": 12.9781,
+        "mean_b": 12.7618,
+        "pval": 0.0004860411724333432
+      },
+      "ssim": {
+        "mean_a": 0.6615,
+        "mean_b": 0.6523,
+        "pval": 2.434586522199834e-09
+      },
+      "lpips": {
+        "mean_a": 0.3566,
+        "mean_b": 0.3874,
+        "pval": 6.714324500113533e-10
+      },
+      "nuclei_dice": {
+        "mean_a": 0.7119,
+        "mean_b": 0.7079,
+        "pval": 0.218372059293228
+      },
+      "nuclei_f1_05": {
+        "mean_a": 0.677,
+        "mean_b": 0.6749,
+        "pval": 0.5460770948098673
+      }
+    },
+    "Kidney_20shot_vs_BaseFlow": {
+      "psnr": {
+        "mean_a": 23.9108,
+        "mean_b": 23.1939,
+        "pval": 1.1585006061836944e-12
+      },
+      "ssim": {
+        "mean_a": 0.8312,
+        "mean_b": 0.821,
+        "pval": 2.7592800802057926e-17
+      },
+      "lpips": {
+        "mean_a": 0.1115,
+        "mean_b": 0.1218,
+        "pval": 4.586262104023128e-18
+      },
+      "nuclei_dice": {
+        "mean_a": 0.7117,
+        "mean_b": 0.706,
+        "pval": 0.00044710158976048235
+      },
+      "nuclei_f1_05": {
+        "mean_a": 0.7408,
+        "mean_b": 0.7321,
+        "pval": 0.012562427283417173
+      }
+    },
+    "Kidney_0shot_vs_BaseFlow": {
+      "psnr": {
+        "mean_a": 19.3416,
+        "mean_b": 17.1342,
+        "pval": 3.099940280486927e-18
+      },
+      "ssim": {
+        "mean_a": 0.758,
+        "mean_b": 0.7415,
+        "pval": 1.917622751652787e-11
+      },
+      "lpips": {
+        "mean_a": 0.2256,
+        "mean_b": 0.2508,
+        "pval": 1.6007449433142407e-09
+      },
+      "nuclei_dice": {
+        "mean_a": 0.6882,
+        "mean_b": 0.6923,
+        "pval": 0.01362599878137842
+      },
+      "nuclei_f1_05": {
+        "mean_a": 0.7111,
+        "mean_b": 0.7145,
+        "pval": 0.14497226464479157
+      }
+    },
+    "liver_20shot_vs_BaseFlow": {
+      "psnr": {
+        "mean_a": 24.7929,
+        "mean_b": 23.5229,
+        "pval": 5.629625483689909e-05
+      },
+      "ssim": {
+        "mean_a": 0.7836,
+        "mean_b": 0.7725,
+        "pval": 5.6410965260670074e-14
+      },
+      "lpips": {
+        "mean_a": 0.1113,
+        "mean_b": 0.1231,
+        "pval": 3.664823496534654e-20
+      },
+      "nuclei_dice": {
+        "mean_a": 0.7299,
+        "mean_b": 0.7261,
+        "pval": 0.0029295483710639575
+      },
+      "nuclei_f1_05": {
+        "mean_a": 0.7472,
+        "mean_b": 0.7478,
+        "pval": 0.6070677434253235
+      }
+    },
+    "liver_0shot_vs_BaseFlow": {
+      "psnr": {
+        "mean_a": 21.0486,
+        "mean_b": 17.976,
+        "pval": 6.660175274945427e-16
+      },
+      "ssim": {
+        "mean_a": 0.7425,
+        "mean_b": 0.7195,
+        "pval": 1.3475321748231086e-15
+      },
+      "lpips": {
+        "mean_a": 0.1971,
+        "mean_b": 0.2539,
+        "pval": 6.406986433697729e-20
+      },
+      "nuclei_dice": {
+        "mean_a": 0.6215,
+        "mean_b": 0.5089,
+        "pval": 1.3627940268460943e-07
+      },
+      "nuclei_f1_05": {
+        "mean_a": 0.6249,
+        "mean_b": 0.5258,
+        "pval": 2.8225310095088006e-06
+      }
+    },
+    "Breast_SRA_vs_NaiveFT": {
+      "psnr": {
+        "mean_a": 23.8997,
+        "mean_b": 23.8055,
+        "pval": 0.12943714041308793
+      },
+      "ssim": {
+        "mean_a": 0.8247,
+        "mean_b": 0.817,
+        "pval": 5.673004956384863e-12
+      },
+      "lpips": {
+        "mean_a": 0.1561,
+        "mean_b": 0.1645,
+        "pval": 5.46942510866401e-09
+      },
+      "nuclei_dice": {
+        "mean_a": 0.5609,
+        "mean_b": 0.5635,
+        "pval": 0.08969325886086828
+      },
+      "nuclei_f1_05": {
+        "mean_a": 0.5667,
+        "mean_b": 0.5735,
+        "pval": 0.19094064984580195
+      }
+    }
+  },
+  "seed_stats": {
+    "BaseFlow": {
+      "psnr": {
+        "mean": 23.05,
+        "std": 0.02,
+        "vals": [
+          23.04,
+          23.02,
+          23.08
+        ]
+      },
+      "ssim": {
+        "mean": 0.8146,
+        "std": 0.0003,
+        "vals": [
+          0.8142,
+          0.8147,
+          0.815
+        ]
+      },
+      "lpips": {
+        "mean": 0.1728,
+        "std": 0.0003,
+        "vals": [
+          0.1732,
+          0.1727,
+          0.1725
+        ]
+      },
+      "kid_x1e3": {
+        "mean": 10.77,
+        "std": 0.11,
+        "vals": [
+          10.62,
+          10.87,
+          10.81
+        ]
+      },
+      "dice": {
+        "mean": 0.5489,
+        "std": 0.002,
+        "vals": [
+          0.5471,
+          0.5517,
+          0.5478
+        ]
+      },
+      "f1": {
+        "mean": 0.552,
+        "std": 0.0022,
+        "vals": [
+          0.5503,
+          0.5552,
+          0.5506
+        ]
+      }
+    },
+    "NaiveFT": {
+      "psnr": {
+        "mean": 23.79,
+        "std": 0.02,
+        "vals": [
+          23.81,
+          23.77,
+          23.79
+        ]
+      },
+      "ssim": {
+        "mean": 0.8178,
+        "std": 0.0007,
+        "vals": [
+          0.817,
+          0.8178,
+          0.8186
+        ]
+      },
+      "lpips": {
+        "mean": 0.1638,
+        "std": 0.0008,
+        "vals": [
+          0.1645,
+          0.1642,
+          0.1627
+        ]
+      },
+      "kid_x1e3": {
+        "mean": 11.14,
+        "std": 0.56,
+        "vals": [
+          11.91,
+          10.62,
+          10.88
+        ]
+      },
+      "dice": {
+        "mean": 0.5648,
+        "std": 0.0025,
+        "vals": [
+          0.5635,
+          0.5627,
+          0.5683
+        ]
+      },
+      "f1": {
+        "mean": 0.5722,
+        "std": 0.001,
+        "vals": [
+          0.5735,
+          0.5713,
+          0.5717
+        ]
+      }
+    },
+    "SRA": {
+      "psnr": {
+        "mean": 23.94,
+        "std": 0.03,
+        "vals": [
+          23.9,
+          23.97,
+          23.94
+        ]
+      },
+      "ssim": {
+        "mean": 0.8249,
+        "std": 0.0002,
+        "vals": [
+          0.8247,
+          0.8251,
+          0.825
+        ]
+      },
+      "lpips": {
+        "mean": 0.1559,
+        "std": 0.0003,
+        "vals": [
+          0.1561,
+          0.156,
+          0.1555
+        ]
+      },
+      "kid_x1e3": {
+        "mean": 8.91,
+        "std": 0.14,
+        "vals": [
+          8.79,
+          9.11,
+          8.84
+        ]
+      },
+      "dice": {
+        "mean": 0.5597,
+        "std": 0.0012,
+        "vals": [
+          0.5609,
+          0.5601,
+          0.5581
+        ]
+      },
+      "f1": {
+        "mean": 0.5659,
+        "std": 0.0019,
+        "vals": [
+          0.5667,
+          0.5677,
+          0.5632
+        ]
+      }
+    }
+  },
+  "fold_means_uniflow": {
+    "0shot": {
+      "psnr": 17.07,
+      "ssim": 0.7217,
+      "lpips": 0.2629,
+      "kid": 54.4,
+      "nuclei_dice": 0.6305,
+      "nuclei_f1_05": 0.6306
+    },
+    "0shot_halfOD": {
+      "psnr": 18.47,
+      "ssim": 0.7411,
+      "lpips": 0.2409,
+      "kid": 49.86,
+      "nuclei_dice": 0.6396,
+      "nuclei_f1_05": 0.6416
+    },
+    "m6_k20": {
+      "psnr": 24.28,
+      "ssim": 0.8017,
+      "lpips": 0.1226,
+      "kid": 22.6,
+      "nuclei_dice": 0.6898,
+      "nuclei_f1_05": 0.6947
+    }
+  }
+}

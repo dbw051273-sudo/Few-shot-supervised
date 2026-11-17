@@ -468,10 +468,14 @@ def adapt_flow(
     seed: int = 7202,
     decoder_lr_mult: float = 0.1,
     rollout_steps: int = 4,
+    od_weight: float = 0.0,
 ) -> tuple[nn.Module, Codec, dict]:
-    """Adapt pretrained flow via 'm6' (replay + SWAD + LPIPS + OD anchor) or 'naive_ft' ablation."""
-    if strategy not in ('m6', 'naive_ft'):
+    """Adapt pretrained flow via 'sra'/'m6' (replay + SWAD + LPIPS, optional OD anchor), 'naive_ft_swa_jitter', or 'naive_ft'."""
+    if strategy not in ('m6', 'sra', 'naive_ft', 'naive_ft_swa_jitter'):
         raise ValueError(f'Unknown adapt strategy: {strategy}')
+    is_replay = strategy in ('m6', 'sra')
+    use_swad = is_replay or strategy == 'naive_ft_swa_jitter'
+    use_jitter = is_replay or strategy == 'naive_ft_swa_jitter'
     torch.manual_seed(seed)
     rng = torch.Generator(device='cuda').manual_seed(seed)
     py_rng = random.Random(seed)
@@ -502,7 +506,6 @@ def adapt_flow(
         )
         swad_mods = {'flow': flow, 'decoder': codec.decoder}
 
-    use_swad = strategy == 'm6'
     swad = SwadAccumulator(swad_mods, start_step=max(1, int(0.4 * steps)), every=max(1, min(10, steps // 10)))
     t_pi, t_he = tgt_pi.cuda(), tgt_he.cuda()
     log_every = max(1, min(500, steps // 2))
@@ -511,7 +514,7 @@ def adapt_flow(
     for step in range(1, steps + 1):
         ti = torch.randint(len(t_pi), (batch,), generator=rng, device='cuda')
         xt, yt = augment_pair(t_pi[ti], t_he[ti], py_rng)
-        xt_in = pi_acq_jitter(xt, py_rng, strength=0.05) if strategy == 'm6' else xt
+        xt_in = pi_acq_jitter(xt, py_rng, strength=0.05) if use_jitter else xt
 
         with torch.no_grad():
             z0_t = (codec.encode(xt_in).float() - center) / scale
@@ -535,7 +538,7 @@ def adapt_flow(
         loss_lp = lpips_fn((pred_t.float().clamp(-1, 1) + 1.0) * 0.5, (yt.clamp(-1, 1) + 1.0) * 0.5).mean()
         loss = loss_vel + loss_img + 0.50 * loss_lp
 
-        if strategy == 'm6':
+        if is_replay:
             op_pi, op_he = src_pools[py_rng.randrange(len(src_pools))]
             si = torch.randint(len(op_pi), (batch,), generator=rng, device='cuda')
             xs, ys = augment_pair(op_pi[si], op_he[si], py_rng)
@@ -555,7 +558,7 @@ def adapt_flow(
             l_s = 0.6 * F.mse_loss(v_s.float(), z1_s - z0_s) + (
                 0.0 if freeze_dec else 0.6 * F.l1_loss(rec_s.float(), ys_in)
             )
-            loss = loss + 0.25 * od_stain_anchor_loss(pred_t.float(), yt) + 0.40 * l_s
+            loss = loss + (od_weight * od_stain_anchor_loss(pred_t.float(), yt) if od_weight > 0.0 else 0.0) + 0.40 * l_s
 
         opt.zero_grad(set_to_none=True)
         loss.backward()

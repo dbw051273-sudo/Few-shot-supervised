@@ -1,0 +1,41 @@
+{
+  "run_tag": "Breast__u0_base_d192__0shot_halfOD",
+  "fold": "Breast",
+  "arch": "u0_base",
+  "dim": 192,
+  "stage": "0shot_halfOD",
+  "strategy": "halfOD",
+  "k_shot": 5,
+  "eval_n": 120,
+  "config_hash": "f19b5755788a",
+  "split_hash": "9dc987370bef",
+  "sparse_bg_lap": 3.7987,
+  "gt_bg_lap": 2.863,
+  "trainable_params_m": 1.6883,
+  "latency_bs1_ms": 12.0,
+  "wall_seconds": 2.13,
+  "metrics": {
+    "psnr": 19.5648289301896,
+    "ssim": 0.7814695253968239,
+    "lpips": 0.2393030767639478,
+    "fid": 88.75077819824219,
+    "kid": 0.02675354853272438,
+    "nuclei_dice": 0.5041997209036102,
+    "nuclei_f1_05": 0.5080351795134513,
+    "nuclei_dice_nonempty": 0.5215859181761485,
+    "nuclei_f1_05_nonempty": 0.5255536339794324,
+    "empty_gt_count": 4,
+    "pcc_gt": 0.885578087468942,
+    "pcc_pi": 0.9017142906785012,
+    "nuclei_count_r": 0.5781698377542681
+  },
+  "paper_core_keys": [
+    "psnr",
+    "ssim",
+    "lpips",
+    "kid",
+    "nuclei_dice",
+    "nuclei_f1_05"
+  ],
+  "timestamp": "2026-11-16T22:58:30.067705"
+}

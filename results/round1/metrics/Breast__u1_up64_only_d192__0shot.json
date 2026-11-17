@@ -7,27 +7,27 @@
   "strategy": "pretrain",
   "k_shot": 0,
   "eval_n": 120,
-  "config_hash": "007b1da4fb68",
-  "split_hash": "9dc987370bef",
-  "sparse_bg_lap": 4.6243,
+  "config_hash": "0b2160cb1488",
+  "split_hash": "0ab70809c409",
+  "sparse_bg_lap": 3.9933,
   "gt_bg_lap": 2.863,
-  "trainable_params_m": 1.7888,
-  "latency_bs1_ms": 29.14,
-  "wall_seconds": 154.41,
+  "trainable_params_m": 1.7878,
+  "latency_bs1_ms": 28.4,
+  "wall_seconds": 152.89,
   "metrics": {
-    "psnr": 15.041976430442174,
-    "ssim": 0.7271660633385182,
-    "lpips": 0.2633210281531016,
-    "fid": 102.7054672241211,
-    "kid": 0.041245926171541214,
-    "nuclei_dice": 0.5028405440505594,
-    "nuclei_f1_05": 0.5081623524390959,
-    "nuclei_dice_nonempty": 0.5201798731557511,
-    "nuclei_f1_05_nonempty": 0.5256851921783752,
+    "psnr": 14.899945336034769,
+    "ssim": 0.724927692860365,
+    "lpips": 0.27232863220075765,
+    "fid": 104.67725372314453,
+    "kid": 0.04405190795660019,
+    "nuclei_dice": 0.5004966903012246,
+    "nuclei_f1_05": 0.509644667101697,
+    "nuclei_dice_nonempty": 0.5177551968633358,
+    "nuclei_f1_05_nonempty": 0.5272186211396865,
     "empty_gt_count": 4,
-    "pcc_gt": 0.8757021238406499,
-    "pcc_pi": 0.8490294590592384,
-    "nuclei_count_r": 0.5332725831834327
+    "pcc_gt": 0.8748740956187249,
+    "pcc_pi": 0.8489541108409564,
+    "nuclei_count_r": 0.5492793232468568
   },
   "paper_core_keys": [
     "psnr",
@@ -37,5 +37,5 @@
     "nuclei_dice",
     "nuclei_f1_05"
   ],
-  "timestamp": "2026-11-16T22:26:53.284088"
+  "timestamp": "2026-11-17T23:58:01.652321"
 }

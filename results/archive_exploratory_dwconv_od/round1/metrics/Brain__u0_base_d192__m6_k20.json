@@ -1,0 +1,41 @@
+{
+  "run_tag": "Brain__u0_base_d192__m6_k20",
+  "fold": "Brain",
+  "arch": "u0_base",
+  "dim": 192,
+  "stage": "20shot",
+  "strategy": "m6",
+  "k_shot": 20,
+  "eval_n": 120,
+  "config_hash": "2b1976f693fd",
+  "split_hash": "d1be04aba0a3",
+  "sparse_bg_lap": 4.2893,
+  "gt_bg_lap": 7.2816,
+  "trainable_params_m": 1.7975,
+  "latency_bs1_ms": 12.89,
+  "wall_seconds": 301.64,
+  "metrics": {
+    "psnr": 23.76897015990372,
+    "ssim": 0.7584808031717937,
+    "lpips": 0.12654165886342525,
+    "fid": 59.40214157104492,
+    "kid": 0.02399441972374916,
+    "nuclei_dice": 0.7455161777635415,
+    "nuclei_f1_05": 0.7159578242373431,
+    "nuclei_dice_nonempty": 0.7455161777635415,
+    "nuclei_f1_05_nonempty": 0.7159578242373431,
+    "empty_gt_count": 0,
+    "pcc_gt": 0.787649076183637,
+    "pcc_pi": 0.7662484690546989,
+    "nuclei_count_r": 0.9143771348065227
+  },
+  "paper_core_keys": [
+    "psnr",
+    "ssim",
+    "lpips",
+    "kid",
+    "nuclei_dice",
+    "nuclei_f1_05"
+  ],
+  "timestamp": "2026-11-16T23:25:31.391475"
+}

@@ -1,0 +1,14 @@
+{
+  "started_at": "2026-11-16T22:19:23.769757",
+  "preset": "round1",
+  "gpu_id_requested": "0",
+  "cuda_visible_devices": "0",
+  "torch_device_name": "NVIDIA GeForce RTX 3080 Ti Laptop GPU",
+  "nvidia_smi": "0, NVIDIA GeForce RTX 3080 Ti Laptop GPU, 16384 MiB",
+  "codec_noise_max": 0.08,
+  "decoder_lr_mult": 0.1,
+  "rollout_steps": 4,
+  "use_on_policy_rollout": false,
+  "work_dir": "C:\\Users\\felix\\Desktop\\Few-shot supervised\uff08\u5c0f\u6837\u672c\u6709\u76d1\u7763\uff09\\07_\u672c\u57303080Ti_Round1\u5b9a\u578b\u7248\u4ea7\u51fa",
+  "data_dir": "C:\\Users\\felix\\Desktop\\Few-shot supervised\uff08\u5c0f\u6837\u672c\u6709\u76d1\u7763\uff09\\03_\u6d01\u51c0\u6570\u636e\u96c6\u4e0e\u91cd\u5efa\u5305\\UniPrior_\u56db\u5668\u5b98\u6d01\u51c0\u5747\u8861\u96c6_v2"
+}
