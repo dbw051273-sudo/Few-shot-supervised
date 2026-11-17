@@ -33,7 +33,7 @@
 \maketitle
 
 \begin{abstract}
-本文研究树脂包埋小鼠组织的碘化丙啶（PI）到苏木精-伊红（H\&E）虚拟染色，聚焦模型在训练期未见目标器官上的严格零样本（0-shot）外推、免训练参考校准（0-shot + halfOD）及极少样本（$K \in \{5, 10, 20\}$）有监督适配问题。跨器官部署同时面临组织解剖形态差异与染色光密度统计分布偏移的双重挑战：在严格零样本下，直接引入病理基础模型先验虽能稳定改善多折像素保真度与感知纹理，但未经目标风格校准时对细胞核精细分割重叠提升有限，在特定器官（如脑组织）上甚至因分布未校准导致样本量无偏分布距离（KID）升高；无配对半阻尼光密度校准（halfOD）虽能快速大幅修复乳腺等高色偏器官的全局伊红失配，但在源域与目标域染色本就相近的器官（如肝脏）上，全局光度校正反而可能导致 KID 略升；最终必须依靠少样本有监督适配才能在跨器官全维度指标上实现稳定跃升。此外，在隐空间块洗牌（PixelShuffle）流匹配解码器中直接注入冻结基础模型特征，极易在切片稀疏背景区域诱发周期性网格伪影。为此，本文提出隐空间整流流匹配框架 \textbf{\methodname{}}：在四倍空间压缩的噪声正则化自编码器（NR-AE）隐空间中构建确定性常微分方程速度场，并在解码末端 $64\times 64$ 高分辨率阶段通过 $3\times 3$ 深度可分离卷积与零初始化 $1\times 1$ 投影残差注入冻结 UNI 编码器的空间特征，在提供高分辨率局部解剖空间先验的同时大幅抑制稀疏背景网格伪影。在此基础上，本文设计“严格零样本—免训练半阻尼光密度校准—光密度锚定源域回放自适应（OASRA $K$-shot）”三阶段渐进部署协议。在四器官（乳腺、脑、肾、肝）轮流留出且严格消除切片空间邻接泄露的 \texttt{UniPrior\_v2} 基准上，\methodname{} 在 20-shot 有监督适配下于全部四个器官上一致优于同协议无先验基座（BaseFlow）、朴素微调（NaiveFT）及四类经典域泛化方法（MixStyle、StainAug、DANN 与 MLDG）。全部代码、四折划分清单与评测管线均已开源：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
+本文研究树脂包埋小鼠组织的碘化丙啶（PI）到苏木精-伊红（H\&E）跨器官虚拟染色，考察模型在训练期未见器官上的严格零样本（0-shot）外推、免训练参考校准（0-shot + halfOD）以及极少样本（$K \in \{5, 10, 20\}$）有监督适配行为。跨器官迁移同时存在组织形态落差与染色光密度分布偏移。实证表明，在严格零样本下，冻结病理基础模型先验虽可改善多折像素误差与感知距离，但在缺乏目标域风格参照时对细胞核分割精度助益有限，在脑组织上甚至导致分布距离 KID 上升；引入 5 张无配对参考图的半阻尼光密度校准（halfOD）可迅速拉齐乳腺等高色偏器官的全局色调，但在染色相近的肝脏组织上反而轻度推高 KID；全指标的稳定改善最终仍依赖少样本有监督适配。另一方面，若在采用亚像素重排（PixelShuffle）的隐空间解码器中直接将基础模型特征叠加至低分辨率令牌层，稀疏背景极易出现周期性网格伪影。为此，本文提出隐空间整流流匹配框架 \textbf{\methodname{}}：在四倍空间压缩的噪声正则化卷积自编码器（NR-AE）隐空间内拟合确定性常微分速度场，并仅在解码末端 $64\times 64$ 分辨率处通过 $3\times 3$ 深度可分离卷积与零初始化投影注入冻结 UNI 空间特征。基于“0-shot $\to$ halfOD $\to$ 光密度锚定源域回放微调（OASRA）”三阶段协议，在四器官轮流留出且消除一维索引邻接重叠的 \texttt{UniPrior\_v2} 基准上，\methodname{} 在 20-shot 下于全部四个器官均取得高于同协议无先验基座（BaseFlow）、朴素微调（NaiveFT）及四类经典域泛化方法（MixStyle、StainAug、DANN、MLDG）的综合重建与分割结果；对比多尺度重型像素网络 UNIStainNet，\methodname{} 以 $1/22$ 的可训练参数量（$1.90\text{M}$ 对 $42.19\text{M}$）在四折 PSNR（均值 $+1.15\text{ dB}$）与 LPIPS 上占优。代码、划分清单与评测管线已开源：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -41,46 +41,40 @@
 \end{IEEEkeywords}
 
 \section{引言}
-苏木精-伊红（H\&E）化学染色是组织病理学诊断与组织结构分析的临床金标准，但传统组织制片涉及脱水、透明、浸蜡、微米级切片与多步化学着色，周期长且消耗化学试剂，不同实验室与染色批次间扫描成像还会引入显著的外观波动~\cite{ref_bai,ref_kreiss,ref_kloeckner}。虚拟染色利用生成模型直接将免染色的自体荧光或碘化丙啶（PI）显微图像转化为对应视野的 H\&E 数字病理图像，有望在保留未染组织完整性的同时显著缩短制片周期。在前序工作 UniPrior~\cite{ref_uniprior} 中，我们针对严格留出器官零样本（0-shot）设定探索了布朗桥扩散模型与冻结病理视觉基础模型 UNI~\cite{ref_uni} 的空间特征条件化，发现严格零样本性能同时受输入光学极性约定与全局染色光密度统计偏移的支配。
+苏木精-伊红（H\&E）染色是组织病理学诊断的常规参照，但化学制片流程繁琐且不同批次扫描易引入外观波动~\cite{ref_bai,ref_kreiss,ref_kloeckner}。虚拟染色通过生成模型将未染色的 PI 荧光显微图像直接映射为 H\&E 图像，可在保留标本完整性的前提下缩短制片周期。在前序工作 UniPrior~\cite{ref_uniprior} 中，我们针对严格留出器官零样本设定研究了布朗桥扩散模型与病理视觉基础模型 UNI~\cite{ref_uni} 的条件化方式，发现零样本生成质量同时受光学极性与全局染色统计偏移的制约。
 
-然而，实际数字病理部署面临一条从“严格零样本”到“极少样本临床适配”的连续光谱：一方面，严格零样本模型难以在完全缺少目标域风格参照时消除跨器官非线性染色偏移（例如乳腺低伊红纤维基质与肝、肾、脑高伊红染液间的显著分布落差）；另一方面，现有跨器官迁移方法或需重新采集全量配对数据进行高成本重训练~\cite{ref_zhang,ref_pgvms}，或在参数量达数亿的扩散去噪主干上执行多步迭代反向采样，计算开销较大且在极少样本微调（$K \le 20$）下极易发生目标域过拟合与源域灾难性遗忘。此外，当模型从单一器官迁移到存在较大空白树脂或稀疏结缔组织的未见器官时，隐空间流匹配生成器中广泛采用的亚像素块洗牌上采样（PixelShuffle）~\cite{ref_shi} 会因基础模型空间特征在低分辨率令牌层的块间突变，在稀疏背景中诱发肉眼可见的 $4\times 4$ 周期性网格伪影。
+真实病理部署并非只有“完全零样本”或“全量重训”两个极端，而是存在从零样本到极少样本适配的过渡区间。严格零样本难以独自消化乳腺低伊红基质与脑、肾、肝高伊红组织之间的非线性染液差异；若沿用全量配对重训练~\cite{ref_zhang} 或在参数量上亿的扩散去噪网络上做少样本微调，不仅采集成本高，微调时还容易出现过拟合与源域灾难性遗忘。同时，当生成架构依赖隐空间亚像素重排（PixelShuffle）~\cite{ref_shi} 进行多倍上采样时，若将外部视觉基础模型的粗粒度令牌直接加至低分辨率特征图，令牌边界的不连续性会在切片空白树脂区被放大成规则网格伪影。
 
-针对上述挑战，本文在统一、可复现的四器官零空间邻接防泄露基准（\texttt{UniPrior\_v2 Clean-120}）上，构建并系统验证隐空间整流流匹配框架 \textbf{\methodname{}}，围绕三个核心科学问题展开严谨实证：
+围绕上述问题，本文在统一的四器官零一维索引邻接基准（\texttt{UniPrior\_v2 Clean-120}）上构建轻量隐空间整流流匹配模型 \textbf{\methodname{}}，重点检验三个实证问题：
 \begin{enumerate}
-    \item \textbf{（Q1：末端空间先验注入与伪影权衡）} 在轻量隐空间流匹配中，将冻结 UNI 的空间网格特征仅以深度可分离残差注入高分辨率速度场末端（\methodname{}），相对直接注入低分辨率令牌层（\texttt{UniFlow-Tok}）及无先验基座（\texttt{BaseFlow}），能否在抑制稀疏背景网格伪影的同时保持高保真重建与核分割精度？两者存在何种客观取舍？
-    \item \textbf{（Q2：三阶段跨器官演进边界与指标取舍）} 在严格 0-shot、基于 5 张无配对参考切片的免训练半阻尼光密度校准（\texttt{0-shot + halfOD}），以及 $K \in \{5, 10, 20\}$ 有监督适配之间，各阶段分别消除哪一类跨器官偏移，又伴随何种指标代价？
-    \item \textbf{（Q3：少样本适配策略与域泛化基线比较）} 联合光密度锚定、染色增广源域回放、解码器低学习率微调与平坦极小值随机权重平均的适配策略（OASRA），相对朴素微调（NaiveFT）及经典域泛化基线（StainAug、MixStyle、DANN、MLDG）在极少样本下是否具备一致优势？
+    \item \textbf{（Q1：末端空间先验注入与网格伪影权衡）} 相比直接向 $16\times 16$ 低分辨率令牌层叠加 UNI 特征（\texttt{UniFlow-Tok}）以及无先验基座（\texttt{BaseFlow}），仅在 $64\times 64$ 速度场末端引入深度可分离平滑残差分支（\methodname{}）能否在频域层面抑制背景周期性伪影？两者在重建指标上存在怎样的取舍？
+    \item \textbf{（Q2：三阶段演进边界与校准敏感性）} 严格 0-shot、基于 5 张无配对参考切片的免训练半阻尼校准（\texttt{0-shot + halfOD}）与 $K \in \{5, 10, 20\}$ 有监督适配分别处理哪一类跨器官偏移，又伴随哪些指标副作用？
+    \item \textbf{（Q3：少样本回放策略与外部范式比较）} 联合光密度锚定与染色增广源域回放的适配策略（OASRA）相对朴素微调（NaiveFT）能否切实缓解源域遗忘，并在统一基准下优于经典域泛化算法与传统像素级生成基线？
 \end{enumerate}
 
-本文的主要贡献总结如下：
-\begin{enumerate}
-    \item \textbf{轻量隐空间流匹配与高分辨率末端空间先验架构（§\ref{sec:method}、图~\ref{fig:arch}、图~\ref{fig:breast_zoom}）}：设计抗噪噪声正则化自编码器（NR-AE）与 4 块 Transformer 整流流速度场，提出末端 $64\times 64$ 深度可分离 UNI 空间先验注入结构（\methodname{}），在 4 步确定性欧拉采样下实现高保真生成并显著降低稀疏背景网格伪影。
-    \item \textbf{零空间邻接四器官分级基准与客观演进实证（§\ref{sec:setup}--\ref{sec:main_res}、表~\ref{tab:main_3stage}、图~\ref{fig:lomo_4organs}、图~\ref{fig:quant}）}：在严格消除空间邻接切片泄露（$|i_{\text{val}} - i_{\text{test}}| > 1$）的四器官 LOMO 基准上，完整评测 0-shot、0-shot + halfOD 与 20-shot 三阶段指标，客观揭示 0-shot 下先验提升与分布距离的器官分化、halfOD 在不同色偏器官上的非对称响应，以及 20-shot 下四器官全指标的稳定跃升。
-    \item \textbf{少样本适配消融与域泛化对比（§\ref{sec:ablation}、表~\ref{tab:breast_ablation}）}：在统一骨干下严格对照 4 类经典 DG 算法及样本量梯度 $K \in \{5, 10, 20\}$，客观论证末端注入与令牌注入的伪影-精度两维权衡，并验证 OASRA 回放策略相对 NaiveFT 的防退化收益。
-    \item \textbf{与代表性生成基线的跨范式对比框架（§\ref{sec:external}、表~\ref{tab:external}）}：在相同划分与评测管线下对齐 Pix2Pix、CycleGAN、CUT、I2SB 与 UNIStainNet，并完成全部代码、切分清单与评测脚本的开源发布（\url{https://github.com/dbw051273-sudo/Few-shot-supervised}）。
-\end{enumerate}
+本文工作归纳如下：（1）提出四倍压缩 NR-AE 卷积隐空间与 4 块 Transformer 整流流主干，采用末端 $64\times 64$ 深度可分离 UNI 先验注入抑制背景网格伪影，并通过全测试集 227 个稀疏背景块上的二维傅里叶变换（2D FFT）谐波能量证实其频域平滑效果；（2）在四器官留出基准上完成 0-shot、halfOD（含混合权重 $\alpha$ 敏感性扫描）与 20-shot 的受控实验，给出 4 种经典域泛化算法对照以及 240 对源域验证集上的抗遗忘实证；（3）在同划分下对齐 Pix2Pix、CycleGAN 与 UNIStainNet 三类外部基线，并与全部代码及切分清单一同开源。
 
 \section{相关工作}
 \subsection{域泛化与跨器官虚拟染色}
-计算病理学中的域泛化（Domain Generalization, DG）通常按特征层级进行约束：输入级染色增广（StainAug~\cite{ref_stainaug}）、浅层特征统计混合扰动（MixStyle~\cite{ref_mixstyle}）、隐表征域对抗对齐（DANN~\cite{ref_dann}）、双层梯度元学习（MLDG~\cite{ref_mldg}）以及寻找平坦极小值的随机权重平均（SWA~\cite{ref_swa}）。然而，上述方法多面向分类或分割任务；当直接推广至像素级图像翻译时，跨域表征强制混淆（如 DANN）常以模糊亚微米级细胞核边界与破坏器官特异性纹理对比为代价。在跨器官虚拟染色方向，Zhang 等~\cite{ref_zhang} 依赖多步扩散模型超分辨率，PGVMS~\cite{ref_pgvms} 聚焦 H\&E 到多重免疫组化（IHC）的提示引导生成，UniStain~\cite{ref_unistain} 提出了器官感知的联合染色框架，CFM-HES~\cite{ref_cfmhes} 探索了条件流匹配在 H\&E 到 HES 染色浓度域转换上的应用，SheafStain~\cite{ref_sheafstain} 研究了层理论与薛定谔桥在组织相干性上的约束，UniPrior~\cite{ref_uniprior} 则初步探索了严格留出器官的零样本布朗桥生成。然而，如何在极少标注样本（$K \le 20$）和极低计算开销下打通“0-shot $\to$ 免训练校准 $\to$ 少样本适配”的全链路机制仍缺乏系统对照。
+计算病理学中的域泛化（DG）按介入层级可分为输入染色增广（StainAug~\cite{ref_stainaug}）、特征统计混合（MixStyle~\cite{ref_mixstyle}）、隐空间域对抗混淆（DANN~\cite{ref_dann}）、一阶元学习（MLDG~\cite{ref_mldg}）以及随机权重平均（SWA~\cite{ref_swa}）。上述算法主要面向图像分类或区域分割设计，直接迁至像素生成任务时，强特征对齐（如 DANN）常伴随细胞核边缘模糊。在虚拟染色迁移方向，Zhang 等~\cite{ref_zhang} 依托扩散超分辨率重建无标记组织，PGVMS~\cite{ref_pgvms} 面向 H\&E 到多重免疫组化（IHC）的提示引导生成，UniStain~\cite{ref_unistain} 研究了器官感知的统一虚拟染色框架，CFM-HES~\cite{ref_cfmhes} 将条件流匹配用于 H\&E 到 HES 染色浓度域增强，SheafStain~\cite{ref_sheafstain} 则借由层理论约束薛定谔桥的组织拓扑一致性。此前工作尚未在同一轻量骨干下系统检验“0-shot $\to$ 免训练参考校准 $\to$ 极少样本有监督回放”各阶段的量化收益与代际权衡。
 
 \subsection{生成主干演进：从对抗网络、扩散桥到整流流匹配}
-早期的虚拟染色主要基于条件对抗生成网络（Pix2Pix~\cite{ref_pix2pix}、CycleGAN~\cite{ref_cyclegan}、CUT~\cite{ref_cut}），其具有单步前向推理速度快（$\le 10\text{ ms}$）的优势，但易受模式坍塌与伪影困扰，且在目标器官跨度较大时泛化能力骤降。以 BBDM~\cite{ref_bbdm} 与 I2SB~\cite{ref_i2sb} 为代表的扩散桥与薛定谔桥模型通过在源域与目标域间构建端到端随机扩散轨迹提升了生成保真度，但高维像素去噪 UNet（参数量常达数千万至上亿）带来沉重的训练与多步反向迭代负担。整流流匹配（Rectified Flow / Flow Matching）~\cite{ref_flowmatch,ref_rectifiedflow} 通过拟合两点间近似直线常微分方程（ODE）速度场，显著平直化了采样轨迹，结合紧凑的自编码器隐空间，支持在 4 步欧拉积分与 $<2\text{M}$ 可训练参数量下实现毫秒级快速推理与低开销少样本适配。表~\ref{tab:related} 对比了代表性工作与本文 \methodname{} 的定位差异。
+早期的图像翻译模型（Pix2Pix~\cite{ref_pix2pix}、CycleGAN~\cite{ref_cyclegan}、CUT~\cite{ref_cut}）支持单步前向生成，推理迅速但缺乏显式光学轨迹约束，跨器官外推时结构稳定性不足。扩散桥与薛定谔桥模型（BBDM~\cite{ref_bbdm}、I2SB~\cite{ref_i2sb}）在源域与目标域间构建端到端随机转移路径，但像素级去噪 UNet 参数量常达数千万至上亿，训练和迭代采样成本偏高。整流流匹配（Rectified Flow / Flow Matching）~\cite{ref_flowmatch,ref_rectifiedflow} 通过拟合两点间近似直线的常微分方程（ODE）速度场缩短了积分路径；结合紧凑卷积隐空间，模型可在 $<2\text{M}$ 可训练参数与 4 步欧拉积分下运行并支持快速少样本微调。表~\ref{tab:related} 概括了代表性基线与 \methodname{} 的结构差异。
 
 \begin{table*}[!t]\centering
-\caption{近邻虚拟染色与域泛化工作及本文 \methodname{} 定位对照（$\checkmark$/$\times$ 表示是否具备对应特性）}\label{tab:related}
+\caption{代表性虚拟染色及域泛化方法与本文 \methodname{} 特性对照}\label{tab:related}
 \footnotesize\setlength{\tabcolsep}{4.5pt}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{llllcccc}
 \toprule
-代表工作 & 生成主干 & 泛化/适配范式 & 零邻接切分 & 基础模型先验 & 三阶段分级 & 背景网格抑制 \\
+代表工作 & 生成主干 & 泛化/适配范式 & 零索引邻接 & 基础模型先验 & 三阶段分级 & 背景网格抑制 \\
 \midrule
 Pix2Pix~\cite{ref_pix2pix} / CycleGAN~\cite{ref_cyclegan} & ResNet / UNet GAN & 配对或循环对抗 & $\times$ & $\times$ & $\times$ & $\times$ \\
 CUT~\cite{ref_cut} & ResNet-9 + PatchNCE & 非配对对比学习 & $\times$ & $\times$ & $\times$ & $\times$ \\
 I2SB~\cite{ref_i2sb} & ADM UNet 薛定谔桥 & 20 步非线性桥采样 & $\times$ & $\times$ & $\times$ & $\times$ \\
-UNIStainNet~\cite{ref_unistainnet} & SPADE-UNet & 冻结 UNI 稠密特征调制 & $\times$ & $\checkmark$ & $\times$ & $\times$ \\
+UNIStainNet~\cite{ref_unistainnet} & SPADE-UNet + 判别器 & 多尺度冻结 UNI 调制 & $\times$ & $\checkmark$ & $\times$ & $\times$ \\
 MixStyle~\cite{ref_mixstyle} / DANN~\cite{ref_dann} & 表征层风格混合 / 对抗 & 域泛化正则 & $\times$ & 可选 & $\times$ & $\times$ \\
-UniPrior~\cite{ref_uniprior} & Swin-UNet 布朗桥 & 严格 0-shot + 全局 OD 校准 & $\times$ & $\checkmark$ (32/64) & 仅阶段 I/II & $\times$ \\
+UniPrior~\cite{ref_uniprior} & Swin-UNet 布朗桥 & 严格 0-shot + OD 校准 & $\times$ & $\checkmark$ (32/64) & 仅阶段 I/II & $\times$ \\
 \midrule
 \textbf{本文 \methodname{}} & 4-块 Transformer 整流流 & 0-shot + halfOD + OASRA $K$-shot & $\checkmark$ & $\checkmark$ (\texttt{up64}) & $\checkmark$ & $\checkmark$ \\
 \bottomrule
@@ -89,12 +83,12 @@ UniPrior~\cite{ref_uniprior} & Swin-UNet 布朗桥 & 严格 0-shot + 全局 OD �
 
 \section{方法}\label{sec:method}
 \subsection{整体框架概览与记号约定}
-记切片输入 PI 图像为 $x \in [-1, 1]^{3\times 256\times 256}$，对应真实 H\&E 图像为 $y \in [-1, 1]^{3\times 256\times 256}$。如图~\ref{fig:arch} 所示，\methodname{} 由三部分构成：（1）四倍空间下采样的噪声正则化自编码器（NR-AE Codec，编码器 $\mathcal{E}_\psi$ 与解码器 $\mathcal{D}_\phi$）；（2）在归一化隐空间运行的轻量 4 块 Transformer 整流流速度网络 $v_\theta$；（3）冻结病理视觉基础模型 UNI（ViT-L/16）~\cite{ref_uni} 驱动的高分辨率末端空间先验注入分支（\methodname{}）。主要数学符号汇总于表~\ref{tab:notation}。
+记输入 PI 切片图像为 $x \in [-1, 1]^{3\times 256\times 256}$，对应的真实 H\&E 图像为 $y \in [-1, 1]^{3\times 256\times 256}$。如图~\ref{fig:arch} 所示，\methodname{} 由三部分组成：（1）四倍空间压缩的噪声正则化卷积自编码器（NR-AE Codec，编码器 $\mathcal{E}_\psi$ 与解码器 $\mathcal{D}_\phi$）；（2）在归一化隐空间运行的 4 块 Transformer 整流流速度网络 $v_\theta$；（3）由冻结病理基础模型 UNI（ViT-L/16）~\cite{ref_uni} 驱动的末端 $64\times 64$ 空间先验注入分支。表~\ref{tab:notation} 列出主要数学符号。
 
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{fig1_arch.pdf}
-\caption{\methodname{} 整体网络架构、源域预训练与跨器官三阶段部署流程图。(a) 在四倍压缩隐空间（$64\times 64\times 12$）中由 4 块 Transformer 预测流速度场，冻结 UNI 提取的 $14\times 14\times 1024$ 空间特征经 $1\times 1$ 投影、双线性上采样至 $64\times 64$ 并经 $3\times 3$ 深度可分离卷积平滑后残差注入末端速度场（对比直接注入 $16\times 16$ 令牌层的 \texttt{UniFlow-Tok} 消融分支）；(b) 源域每折 480$\times$3 对切片的抗噪编解码器与流匹配预训练；(c) 目标器官上的严格零样本 4 步欧拉采样、5 张无配对参考切片半阻尼光密度校准（\texttt{halfOD}）与 \texttt{OASRA} 少样本微调。}
+\caption{\methodname{} 网络架构、源域预训练与跨器官三阶段部署流程图。(a) 在四倍压缩隐空间（$64\times 64\times 12$）中由 4 块 Transformer 预测流速度场，冻结 UNI 提取的 $14\times 14\times 1024$ 空间特征经 $1\times 1$ 降维、双线性插值至 $64\times 64$ 与 $3\times 3$ 深度可分离卷积平滑后残差叠加至末端速度场（对照直接叠加于 $16\times 16$ 令牌层的 \texttt{UniFlow-Tok} 消融分支）；(b) 源域每折 480$\times$3 对数据的卷积自编码器与流匹配预训练；(c) 目标器官上的 4 步零样本欧拉采样、5 张参考切片半阻尼光密度校准（\texttt{halfOD}）与 \texttt{OASRA} 少样本微调。}
 \label{fig:arch}
 \end{figure*}
 
@@ -107,55 +101,49 @@ UniPrior~\cite{ref_uniprior} & Swin-UNet 布朗桥 & 严格 0-shot + 全局 OD �
 符号 & 物理/网络含义 \\
 \midrule
 $x, y$ & PI 输入与 H\&E 真值切片（$3\times 256\times 256$，$[-1, 1]$） \\
-$\mathcal{E}_\psi, \mathcal{D}_\phi$ & NR-AE 编码器与解码器（$64\times 64\times 12$ 隐空间） \\
-$\mu_z, s_z$ & 源域隐空间全局中心化常数与缩放因子（标量 $\in \mathbb{R}$） \\
-$z_0, z_1$ & 经标准化后的 PI 与 H\&E 隐空间表征（$12\times 64\times 64$） \\
-$v_\theta(\cdot)$ & 隐维度 $d=192$ 的 4 块 Transformer 速度预测器 \\
-$\phi_U(x)$ & 冻结 UNI 编码器提取的空间特征网格（$14\times 14\times 1024$） \\
-$W_{1\times 1}^{\text{hi}}, \mathcal{K}_{\text{dw}}$ & 末端注入分支的 $1\times 1$ 降维投影与 $3\times 3$ 深度可分离卷积 \\
-$M_{\text{HE}}, M_{\text{HE}}^+$ & 固定 Ruifrok H/E 染色吸收基矩阵及其 Moore--Penrose 伪逆 \\
-$\mathcal{L}_{\text{bg-lap}}$ & 稀疏背景拉普拉斯高频网格伪影统计量 \\
+$\mathcal{E}_\psi, \mathcal{D}_\phi$ & NR-AE 卷积编码器与重排解码器（$64\times 64\times 12$ 隐空间） \\
+$\mu_z, s_z$ & 源域隐空间全局均值与标准差标量（$\in \mathbb{R}$） \\
+$z_0, z_1$ & 标准化后的 PI 与 H\&E 隐空间状态（$12\times 64\times 64$） \\
+$v_\theta(\cdot)$ & 隐维度 $d=192$ 的 4 块 Transformer 速度网络 \\
+$\phi_U(x)$ & 冻结 UNI 编码器提取的空间网格特征（$14\times 14\times 1024$） \\
+$W_{1\times 1}^{\text{hi}}, \mathcal{K}_{\text{dw}}$ & 末端注入分支的 $1\times 1$ 投影与 $3\times 3$ 深度可分离卷积 \\
+$M_{\text{HE}}, M_{\text{HE}}^+$ & 固定 Ruifrok H/E 吸收基矩阵及其 Moore--Penrose 伪逆 \\
+$\mathcal{L}_{\text{bg-lap}},\, E_{\text{FFT}}$ & 稀疏背景拉普拉斯指标与 2D FFT 周期网格能量比 \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-\subsection{噪声正则化自编码器（NR-AE Codec）}
-为将像素密集计算转移至紧凑的隐空间，并增强解码器对流积分采样微扰的鲁棒性，我们在每一折源域训练集（3 个源器官，共 $2\times 1440$ 张 PI 与 H\&E 切片）上首先预训练轻量 NR-AE 编解码器。编码器 $\mathcal{E}_\psi$ 通过多级步长卷积将 $3\times 256\times 256$ 图像下采样至 $12\times 64\times 64$ 的紧凑隐表征。
-% TODO [需作者核实/补数]: 请作者核实 NR-AE 内部卷积层配置与是否含残差连接细节；当前源码中 Codec 编码器由 Conv2d(3,32,5,stride=2) -> SiLU -> Conv2d(32,48,3,stride=2) -> SiLU -> Conv2d(48,12,3,p=1) 构成，解码器由两级 Conv2d + PixelShuffle(2) 构成，为纯前馈步长卷积结构。
+\subsection{噪声正则化卷积自编码器（NR-AE Codec）}
+为降低流匹配采样步的计算开销并提升解码器对采样路径扰动的耐受性，我们在每折源域训练集（3 个源器官共 $2\times 1440$ 张 PI 与 H\&E 切片）上预先训练轻量 NR-AE 编解码器。编码器 $\mathcal{E}_\psi$ 采用纯前馈三层卷积结构（$\text{Conv}_{5\times 5,s=2}(3\!\to\!32) \to \text{SiLU} \to \text{Conv}_{3\times 3,s=2}(32\!\to\!48) \to \text{SiLU} \to \text{Conv}_{3\times 3}(48\!\to\!12)$）将输入映射至 $12\times 64\times 64$ 隐空间；解码器 $\mathcal{D}_\phi$ 由两级卷积与 $2\times$ 亚像素重排（\texttt{PixelShuffle(2)}）交替组成，恢复 $3\times 256\times 256$ 图像。
 
-训练期间，向隐状态 $z = \mathcal{E}_\psi(u)$ 注入与批次标准差成比例的动态高斯微扰以实施噪声正则化：
+训练阶段向隐状态 $z = \mathcal{E}_\psi(u)$ 注入与批内标准差成比例的动态高斯噪声：
 \begin{equation}
 \tilde{z} = z + \sigma \cdot \epsilon, \quad \sigma \sim \mathcal{U}(0, 0.08 \cdot \text{std}(z)), \quad \epsilon \sim \mathcal{N}(0, I),
 \end{equation}
-解码器 $\mathcal{D}_\phi$ 包含两级 $2\times$ 亚像素卷积（PixelShuffle）将 $\tilde{z}$ 重构回像素空间。自编码器优化目标结合 $\ell_1$ 像素重建损失、隐空间能量约束与边缘梯度保持损失：
+优化目标由像素 $\ell_1$ 重建误差、隐表征 $\ell_2$ 能量惩罚与一阶空间梯度损失构成：
 \begin{equation}
 \mathcal{L}_{\text{codec}} = \|\mathcal{D}_\phi(\tilde{z}) - u\|_1 + 10^{-3}\|z\|_2^2 + 0.15\,\mathcal{L}_{\text{grad}}\big(\mathcal{D}_\phi(\tilde{z}), u\big),
 \end{equation}
-其中 $\mathcal{L}_{\text{grad}}(\hat{u}, u) = \|\nabla_x \hat{u} - \nabla_x u\|_1 + \|\nabla_y \hat{u} - \nabla_y u\|_1$。编码器预训练完成后在后续流匹配与微调阶段保持完全冻结。统计源域全量隐表征计算得到全局均值标量 $\mu_z = \text{mean}(z_{\text{src}}) \in \mathbb{R}$ 与全局标准差标量 $s_z = \text{std}(z_{\text{src}}) \in \mathbb{R}$，由此定义标准化源端与目标端状态：
-% TODO [需作者核实/补数]: 请核对 \mu_z 与 s_z 的维数定义（当前代码实现为全局单标量 float，公式中已据实写为标量；若未来扩展为通道级向量 [12, 1, 1]，请在此修正）。
-\begin{equation}
-z_0 = \frac{\mathcal{E}_\psi(x) - \mu_z}{s_z}, \quad z_1 = \frac{\mathcal{E}_\psi(y) - \mu_z}{s_z}.
-\end{equation}
+其中 $\mathcal{L}_{\text{grad}}(\hat{u}, u) = \|\nabla_x \hat{u} - \nabla_x u\|_1 + \|\nabla_y \hat{u} - \nabla_y u\|_1$。编解码器预训练完毕后冻结 $\mathcal{E}_\psi$，统计源域全体隐特征得到全局标量中心化均值 $\mu_z \in \mathbb{R}$ 与标准差 $s_z \in \mathbb{R}$，定义标准化状态 $z_0 = (\mathcal{E}_\psi(x) - \mu_z)/s_z$ 与 $z_1 = (\mathcal{E}_\psi(y) - \mu_z)/s_z$。
 
-\subsection{隐空间整流流匹配与四步确定性欧拉求解}
-在源端 $z_0$ 与目标端 $z_1$ 之间构建连续时间 $t \in [0, 1]$ 的线性插值轨迹 $z_t = (1-t)z_0 + t z_1$，其理想瞬时速度场为确定性常微分向量 $v^\star = z_1 - z_0$。速度网络 $v_\theta$ 采用 Patch 划分将状态图 $z_t$ 与条件图 $z_0$ 以步长 4 投影为 $N_{\text{tok}}=256$ 个空间令牌（对应 $16\times 16$ 空间网格，隐维度 $d=192$），并叠加可学习位置编码 $E_{\text{pos}}$、流角色偏置 $E_{\text{role}}^{(r)}$ 及正余弦时间编码 $\gamma(t)$：
+\subsection{隐空间整流流匹配与四步欧拉求解}
+在 $z_0$ 与 $z_1$ 间建立线性插值轨迹 $z_t = (1-t)z_0 + t z_1$（$t \in [0, 1]$），其瞬时目标速度场为常向量 $v^\star = z_1 - z_0$。速度网络 $v_\theta$ 以 $4\times 4$ 卷积核将 $z_t$ 与 $z_0$ 各自编码为 $N_{\text{tok}}=256$ 个 $d=192$ 维空间令牌（对应 $16\times 16$ 空间网格），加入可学习位置编码 $E_{\text{pos}}$、角色偏置 $E_{\text{role}}^{(r)}$ 及正余弦时间编码 $\gamma(t)$：
 \begin{equation}
 \begin{aligned}
 H_a^{(0)} &= \text{Patch}_a(z_t) + E_{\text{pos}} + E_{\text{role}}^{(0)} + \gamma(t), \\
 H_b^{(0)} &= \text{Patch}_b(z_0) + E_{\text{pos}} + E_{\text{role}}^{(1)} + \gamma(t).
 \end{aligned}
 \end{equation}
-两路令牌分别通过独立的 Transformer 块 $B_0, B_1$，沿令牌维度拼接后送入交互块 $B_2, B_3$（4 头注意力），最后提取前 256 个状态令牌经线性重排与 4 倍亚像素展开（\texttt{PixelShuffle(4)}）恢复至 $64\times 64\times 12$ 基础速度场 $v_{\text{base}}(z_t, z_0, t)$。
+两路令牌分别经过独立的 Transformer 块 $B_0, B_1$ 后拼接送入交互块 $B_2, B_3$（4 头注意力），取回前 256 个状态令牌经线性映射与 \texttt{PixelShuffle(4)} 恢复为 $64\times 64\times 12$ 基础速度场 $v_{\text{base}}(z_t, z_0, t)$。
 
-源域预训练阶段以均方速度回归损失优化 $9{,}600$ 步，自 $0.5T$ 步起开启随机权重平均（SWA~\cite{ref_swa}）：
-% TODO [需作者核实/补数]: 源码 SwadAccumulator 采用固定 step 比例 (预训练 0.5T / 适配 0.4T) 与固定步长间隔 (every=10) 累加平均，本质为随机权重平均 (SWA, Izmailov et al., 2018) 而非基于验证集密集过拟合波谷检测的 SWAD (Cha et al., 2021)；本文已统一更正为 SWA。若后续实验加入动态过拟合区间选择，可恢复为 SWAD 并补实验说明。
+源域预训练以均方速度回归损失优化 $9{,}600$ 步（配合 4 种几何翻转对称增强），自 $0.5T$ 起以固定间隔开启随机权重平均（SWA~\cite{ref_swa}）：
 \begin{equation}
 \begin{aligned}
 \mathcal{L}_{\text{FM}}(\theta) = \mathbb{E}_{t\sim\mathcal{U}(0,1),\,(x,y)}\Big[\big\| & v_\theta\big((1-t)z_0 + t z_1, z_0, t, \phi_U(x)\big) \\
 & - (z_1 - z_0)\big\|_2^2\Big].
 \end{aligned}
 \end{equation}
-在推理部署时，仅需运行一次冻结 UNI 并缓存空间特征，随后沿等距步长 $\Delta t = 1/S$（默认 $S=4$ 步）执行确定性前向欧拉数值积分，并由解码器还原像素图像：
+推理阶段单次运行冻结 UNI 并缓存特征，随后以均匀步长 $\Delta t = 1/S$（默认 $S=4$ 步）执行确定性前向欧拉积分与解码：
 \begin{equation}
 \begin{aligned}
 \hat{z}_{k+1} &= \hat{z}_k + \frac{1}{S}\, v_\theta\Big(\hat{z}_k, z_0, \frac{k}{S}, \phi_U(x)\Big), \quad k=0,\dots,S-1, \\
@@ -164,98 +152,81 @@ H_b^{(0)} &= \text{Patch}_b(z_0) + E_{\text{pos}} + E_{\text{role}}^{(1)} + \gam
 \end{equation}
 
 \subsection{病理基础模型空间先验注入与网格伪影抑制}\label{sec:uni_inject}
-冻结病理视觉基础模型 UNI（ViT-L/16）接收 $224\times 224$ 分辨率的输入 PI 图像，去除 CLS 令牌后得到 $14\times 14\times 1024$ 的粗粒度解剖语义网格特征 $U_{14}$。需要强调的是，该 $14\times 14$ 特征本质上提供的是**病理语义空间布局与宏观解剖结构先验**，经上采样后并不具备真实的光学高频微观细节。为了系统探究其注入位置对生成图像质量与伪影的影响，本文对比两种接口：
+冻结 UNI（ViT-L/16）处理缩放至 $224\times 224$ 的 PI 切片，去除 CLS 令牌得到 $14\times 14\times 1024$ 空间网格特征 $U_{14}$。该网格提供宏观组织语义定位与解剖结构先验，经双线性插值放大的特征图本身并不包含真实光学微观高频。针对 $U_{14}$ 的接入尺度，本文对照两种接口：
 
-\paragraph{1) 令牌级 $1\times 1$ 注入分支（\texttt{UniFlow-Tok}，消融基线）} 将 $U_{14}$ 双线性插值至 $16\times 16$，经 $1\times 1$ 卷积投影与零初始化线性层 $Z_1, Z_2$ 直接叠加至 Transformer 隐空间令牌：
+\paragraph{1) 令牌级 $1\times 1$ 注入分支（\texttt{UniFlow-Tok}）} 将 $U_{14}$ 双线性插值至 $16\times 16$，经 $1\times 1$ 降维与零初始化投影 $Z_1, Z_2$ 叠加进第 2、3 块 Transformer 的状态令牌中：
 \begin{equation}
 \begin{aligned}
 U_{16} &= \text{SiLU}\big(W_{1\times 1}(\text{Interp}_{16}(U_{14}))\big), \\
 H_a &\leftarrow H_a + \text{Flat}\big(Z_m(U_{16})\big), \quad m\in\{1,2\}.
 \end{aligned}
 \end{equation}
-由于每个 $16\times 16$ 令牌在解码输出端经 \texttt{PixelShuffle(4)} 独立展开为 $4\times 4$ 空间像素块，当模型遇到大面积稀疏结缔组织或纯空白树脂时，令牌之间的不连续性被非线性放大，诱发肉眼显著可见的 $4\times 4$ 周期性棋盘网格伪影。
+由于每个 $16\times 16$ 令牌在速度输出端经 \texttt{PixelShuffle(4)} 独立展开为 $4\times 4$ 隐空间块（再经两级 \texttt{PixelShuffle(2)} 映射至 $16\times 16$ 像素块），当切片存在大片空白树脂时，令牌间微小的数值突变会被放大为规律性的棋盘格伪影。
 
-\paragraph{2) 本文高分辨率末端空间先验注入（\methodname{}）} 取消低分辨率令牌层的特征叠加，将 $U_{14}$ 降维至 $d/2=96$ 通道后直接双线性上采样至解码末端的 $64\times 64$ 分辨率，施加一组复制填充（\texttt{replicate}）的 $3\times 3$ 深度可分离卷积 $\mathcal{K}_{\text{dw}}$ 以平滑块边界过渡，并通过零初始化 $1\times 1$ 投影 $\mathcal{Z}_{\text{hi}}$ 残差注入最终速度场：
+\paragraph{2) 高分辨率末端空间先验注入（\methodname{}）} 移除低分辨率令牌层叠加，先将 $U_{14}$ 压缩至 $d/2=96$ 通道，双线性插值至 $64\times 64$，经复制填充（\texttt{replicate}）的 $3\times 3$ 深度可分离卷积 $\mathcal{K}_{\text{dw}}$ 平滑邻域过渡，再经零初始化 $1\times 1$ 投影 $\mathcal{Z}_{\text{hi}}$ 叠加到速度场末端：
 \begin{equation}
 U_{64} = \text{Interp}_{64}\Big(\text{SiLU}\big(W_{1\times 1}^{\text{hi}}(U_{14})\big)\Big) \in \mathbb{R}^{96\times 64\times 64},
 \end{equation}
 \begin{equation}
 v_\theta(z_t, z_0, t, \phi_U(x)) = v_{\text{base}}(z_t, z_0, t) + \Delta v\big(\phi_U(x)\big),
 \end{equation}
-其中末端速度增量显式定义为：
+其中末端修正支路显式写作：
 \begin{equation}
 \Delta v\big(\phi_U(x)\big) = \mathcal{Z}_{\text{hi}}\Big(\text{SiLU}\big(\mathcal{K}_{\text{dw}}(U_{64})\big)\Big).
 \end{equation}
 
-\noindent\textbf{末端注入特性的客观分析}：值得注意的是，末端分支 $\Delta v\big(\phi_U(x)\big)$ 在数学上**不依赖于中间状态 $z_t$ 与积分时间 $t$**，其在全积分轨迹中充当一个由输入结构决定的静态空间速度偏置。这一架构设计具有明确的双面性：
-\begin{itemize}
-    \item \textbf{优势（伪影消除）}：解除了高阶语义特征与中间隐状态 $z_t$ 的深度跨步耦合，阻断了局部高频激活在 PixelShuffle 空间重排过程中的非线性误差放大，从结构上彻底根除稀疏背景区域的周期性格点伪影；
-    \item \textbf{代价（交互受限）}：由于缺乏与时步 $t$ 和去噪状态 $z_t$ 的多轮深层时空动态交互，其对复杂重度染色的拟合自由度略低于不受约束的令牌注入结构（\texttt{UniFlow-Tok}），这也客观解释了为何在部分重建指标上 \texttt{UniFlow-Tok} 略有占优。
-\end{itemize}
+\noindent\textbf{末端注入结构的双面性}：末端分支 $\Delta v\big(\phi_U(x)\big)$ 仅依赖输入 $x$ 的空间特征，而**不依赖于中间隐状态 $z_t$ 与积分时间步 $t$**，在整个采样积分期间提供静态的空间结构速度偏置。这一设计解除了高阶先验与动态流状态的多轮非线性耦合，从而阻断了块洗牌阶段的网格放大效应；但作为权衡，它减少了先验特征对去噪演化轨线的动态自适应调节自由度，导致峰值像素指标略低于无平滑约束的 \texttt{UniFlow-Tok}。
 
-为定量刻画稀疏背景区域的棋盘网格伪影，定义稀疏背景拉普拉斯能量指标（\texttt{bg\_lap}）：在测试切片（如乳腺 \texttt{file\_4278.png}）的边缘稀疏树脂区域 $\Omega = [40:168,\, 0:128]$ 提取灰度图像，计算四邻域离散拉普拉斯能量：
+\paragraph{稀疏背景网格伪影的频域与空间联合度量} 为克服单一代表切片局部拉普拉斯指标（\texttt{bg\_lap}）样本量受限与易受背景过平滑混淆的缺陷，本文在沿用边缘稀疏窗口 $[40:168,\,0:128]$ 离散拉普拉斯统计量的同时，进一步引入**全测试集二维傅里叶变换（2D FFT）周期网格能量占比**：在真值灰度图上自动筛选满足均值 $>210$ 且标准差 $<15$ 的 $64\times 64$ 稀疏背景块（在 Breast 120 例测试集中共检出 51 例切片的 227 个背景块），乘以 Hann 窗后计算 2D FFT 功率谱，统计对应 $16\times 16$ 像素令牌映射周期（\texttt{16px-Grid-FFT}）及其 $4\times 4$ 亚像素谐波频点（\texttt{Harm-FFT}）占总交流能量的百分比。
+
+\subsection{三阶段跨器官部署与 OASRA 少样本微调}
+\paragraph*{阶段 I（严格 0-shot）} 直接以源域 SWA 权重在目标域执行 4 步欧拉采样，不接触任何目标样本。
+
+\paragraph*{阶段 II（免训练半阻尼光密度校准，\texttt{0-shot + halfOD}）} 利用 $n=5$ 张与测试集无索引邻接的无配对目标参考图 $\mathcal{D}_{\text{ref}}$，按 Beer--Lambert 定律 $\text{OD}(I) = -\ln\big((I+1)/256\big)$ 与固定 Ruifrok 吸收矩阵 $M_{\text{HE}} \in \mathbb{R}^{3\times 2}$~\cite{ref_ruifrok} 在有效组织前景（$\sum_c \text{OD}_c > 0.15$）提取 H/E 平均浓度 $\bar{c}_{\text{ref}}$ 与 $\bar{c}_{\text{gen}}$。记全浓度比值为 $s_c = \bar{c}_{\text{ref}}^{(c)} / (\bar{c}_{\text{gen}}^{(c)} + \varepsilon)$，首先计算全光密度缩放重建图像 $\hat{y}_{\text{fullOD}}$，再在像素空间按混合比例 $\alpha = 0.5$ 执行半阻尼融合以抑制无配对统计估计的过冲：
 \begin{equation}
 \begin{aligned}
-\mathcal{L}_{\text{bg-lap}}(I) = \frac{1}{|\Omega|}\sum_{(r,c)\in\Omega} \big| & 4 I_{r,c} - I_{r-1,c} - I_{r+1,c} \\
-& - I_{r,c-1} - I_{r,c+1}\big|.
-\end{aligned}
-\end{equation}
-% TODO [需作者核实/补数]: 当前稀疏背景网格指标仅在单张代表性乳腺切片 (file_4278.png) 上的边缘稀疏窗口 [40:168, 0:128] 计算，存在单样本局部统计局限；建议作者在后续版本中补充计算全测试集上的二维傅里叶变换 (2D FFT) 周期性网格伪影能量谱指标，以提供更具统计鲁棒性的全切片全频段伪影定量评估。
-
-\subsection{三阶段跨器官渐进部署与 OASRA 少样本微调}
-针对跨器官部署中形态与光密度统计的渐进消除，构建三阶段部署协议：
-
-\paragraph*{阶段 I（严格 0-shot）} 直接加载源域预训练 SWA 权重进行 4 步前向欧拉求解，完全不接触目标器官任何样本。
-
-\paragraph*{阶段 II（免训练半阻尼光密度校准，\texttt{0-shot + halfOD}）} 在允许获取 $n=5$ 张目标域无配对参考切片 $\mathcal{D}_{\text{ref}}$ 时，利用 Beer--Lambert 定律与 Ruifrok 染色解卷积矩阵 $M_{\text{HE}} \in \mathbb{R}^{3\times 2}$~\cite{ref_ruifrok} 转换至光密度空间 $\text{OD}(I) = -\ln\big((I+1)/256\big)$。在有效组织掩码（$\sum_c \text{OD}_c > 0.15$）上分别提取参考集与生成切片的苏木精（H）与伊红（E）双通道平均浓度 $\bar{c}_{\text{ref}}$ 与 $\bar{c}_{\text{gen}}$。为抑制无配对统计的小样本扰动，施加指数为 $0.5$ 的半阻尼缩放：
-\begin{equation}
-\begin{aligned}
-s_c &= \Big(\frac{\bar{c}_{\text{ref}}^{(c)}}{\bar{c}_{\text{gen}}^{(c)} + \varepsilon}\Big)^{0.5}, \quad c \in \{\text{H}, \text{E}\}, \\
-\hat{y}_{\text{halfOD}} &= \exp\big(-M_{\text{HE}}\,\text{diag}(s_{\text{H}}, s_{\text{E}})\,M_{\text{HE}}^+ \text{OD}(\hat{y})\big).
+\hat{y}_{\text{fullOD}} &= 256\exp\big(-M_{\text{HE}}\,\text{diag}(s_{\text{H}}, s_{\text{E}})\,M_{\text{HE}}^+ \text{OD}(\hat{y})\big) - 1, \\
+\hat{y}_{\text{halfOD}} &= (1 - \alpha)\,\hat{y} + \alpha\,\hat{y}_{\text{fullOD}}, \quad \alpha = 0.5.
 \end{aligned}
 \end{equation}
 
-\paragraph*{阶段 III（光密度锚定源域回放自适应，OASRA $K$-shot）} 当开放 $K \in \{5, 10, 20\}$ 对互不邻接的目标域配对样本 $\mathcal{D}_K$ 时，冻结编码器 $\mathcal{E}_\psi$，同时联合优化流网络 $v_\theta$（学习率 $\eta = 2\times 10^{-4}$）与解码器 $\mathcal{D}_\phi$（微调学习率 $0.1\eta = 2\times 10^{-5}$），总优化 $1{,}000$ 步并在 $0.4T$ 后开启 SWA 权重滑动平均。目标域损失包含速度场拟合、端到端 4 步展开重构、局部梯度、感知距离与光密度锚定约束：
+\paragraph*{阶段 III（光密度锚定源域回放自适应，OASRA $K$-shot）} 开放 $K \in \{5, 10, 20\}$ 对互不邻接的目标样本 $\mathcal{D}_K$ 后，保持编码器 $\mathcal{E}_\psi$ 冻结，联合微调流网络 $v_\theta$（学习率 $\eta = 2\times 10^{-4}$）与解码器 $\mathcal{D}_\phi$（$0.1\eta = 2\times 10^{-5}$），总优化 $1{,}500$ 步并在 $0.4T$ 后开启 SWA。目标域损失结合速度回归、4 步展开端到端像素/梯度/LPIPS 损失与光密度锚定项 $\mathcal{L}_{\text{OD}}$：
 \begin{equation}
 \begin{aligned}
 \mathcal{L}_{\text{tgt}} = \mathcal{L}_{\text{vel}} &+ 4.0\,\|\hat{y}_t - y_t\|_1 + 2.0\,\mathcal{L}_{\text{grad}}(\hat{y}_t, y_t) \\
 &+ 0.50\,\mathcal{L}_{\text{LPIPS}}(\hat{y}_t, y_t) + 0.25\,\mathcal{L}_{\text{OD}}(\hat{y}_t, y_t),
 \end{aligned}
 \end{equation}
-其中光密度锚定损失显式定义为逐像素浓度 $\ell_1$ 误差与全局空间均值偏移之和：
 \begin{equation}
 \mathcal{L}_{\text{OD}}(\hat{y}, y) = \|c(\hat{y}) - c(y)\|_1 + 0.5\,\|\bar{c}(\hat{y}) - \bar{c}(y)\|_1,
 \end{equation}
-这里 $c(I) = M_{\text{HE}}^+ \text{OD}(I)$ 为浓度分解特征图。为防止极少样本微调导致源域结构灾难性遗忘，在每步训练中抽取源域配对 $(x_s, y_s)$，并经染色增广变换为对齐目标风格的样本 $y_s^{\text{aug}}$，构建 OASRA 联合适配总目标：
-% TODO [需作者核实/补数]: 已根据源码 round1_losses_and_data.py 校准公式中源域重构项隐状态符号为与增广目标 y_s^aug 对应的 z_1^{src,aug}；请作者核对该项与代码的一致性。
+其中 $c(I) = M_{\text{HE}}^+ \text{OD}(I)$。为防止少样本微调破坏源域既得知识，每步随机抽取源域样本对 $(x_s, y_s)$，将 $y_s$ 经染色增广映射至目标分布范围得到 $y_s^{\text{aug}}$（对应隐表征 $z_1^{\text{src,aug}} = (\mathcal{E}_\psi(y_s^{\text{aug}}) - \mu_z)/s_z$），构建联合适配总损失：
 \begin{equation}
 \begin{aligned}
 \mathcal{L}_{\text{OASRA}} = \mathcal{L}_{\text{tgt}} + 0.40\,\Big( & 0.60\,\mathcal{L}_{\text{vel}}^{\text{src}}(x_s, y_s^{\text{aug}}) \\
 & + 0.60\,\|\mathcal{D}_\phi(s_z z_1^{\text{src,aug}} + \mu_z) - y_s^{\text{aug}}\|_1\Big).
 \end{aligned}
 \end{equation}
-在数据输入端引入 PI 采集抖动：对比度缩放 $\alpha \sim \mathcal{U}(0.92, 1.08)$，亮度偏移 $\beta \sim \mathcal{U}(-0.04, 0.04)$，并以 $0.5$ 概率添加高斯噪声 $\epsilon \sim \mathcal{N}(0, 0.012^2)$。与之相对的朴素微调（\texttt{NaiveFT}）对照消融则完全关闭 $\mathcal{L}_{\text{OD}}$、源域回放、PI 抖动与 SWA。
+训练时对 PI 输入施加采集抖动（对比度 $\alpha_{\text{c}} \sim \mathcal{U}(0.92, 1.08)$、偏置 $\beta \sim \mathcal{U}(-0.04, 0.04)$，以 $0.5$ 概率叠加 $\mathcal{N}(0, 0.012^2)$ 噪声）。作为对照，朴素微调（\texttt{NaiveFT}）关闭 $\mathcal{L}_{\text{OD}}$、源域回放、PI 抖动与 SWA。
 
 \section{实验与结果分析}
-\subsection{数据集、零邻接协议与模型复杂度说明}\label{sec:setup}
-实验在四器官基准 \texttt{UniPrior\_v2} 上开展，涵盖乳腺（\texttt{Breast}）、大脑（\texttt{Brain}）、肾脏（\texttt{Kidney}）与肝脏（\texttt{Liver}）四类小鼠组织（图像统一归一化至 $256\times 256$）。轮流留出一个器官作为目标测试域（120 对测试切片），其余三个器官作为源域（每器官 480 训练 / 80 验证切片，共 1,440 对源训练与 240 对源验证切片）。切片划分脚本严格执行索引距离过滤 $|i_{\text{val}} - i_{\text{test}}| > 1$，确保各器官用于少样本适配的样本池与测试集之间的空间邻接切片对数量绝对为零（\texttt{val\_test\_adj\_pairs = 0}），彻底杜绝物理邻接引发的信息泄露。
+\subsection{数据集、切分协议与评测设置}\label{sec:setup}
+实验在四器官平衡集 \texttt{UniPrior\_v2} 上执行，包含乳腺（\texttt{Breast}）、大脑（\texttt{Brain}）、肾脏（\texttt{Kidney}）与肝脏（\texttt{Liver}）切片（统一尺度 $256\times 256$）。每折轮流留出 1 个目标器官（120 对测试切片，验证集中抽取 $K \in \{5, 10, 20\}$ 适配集及 5 张 \texttt{refs\_5}），其余 3 个器官构成源域（每器官 480 训练 / 80 验证，共 1,440 对源训练与 240 对源验证样本）。切分脚本校核 $|i_{\text{val}} - i_{\text{test}}| > 1$，消除了切片一维连续索引邻接重叠（\texttt{val\_test\_adj\_pairs = 0}）。
+% TODO [需作者核实/补数]: 请作者在终稿中补充树脂包埋小鼠组织 PI->H&E 数据集的原始文献出处、荧光成像波段/物镜倍率、像素物理分辨率以及各器官小鼠个体与整片（WSI）数量统计。
 
-评测指标采用六项核心互补尺度：像素保真度（PSNR $\uparrow$、SSIM $\uparrow$）、感知纹理距离（LPIPS $\downarrow$）、小样本无偏分布距离 KID（$\times 10^{-3}$ $\downarrow$，子集尺寸 50，消除常规 FID 在有限测试集 $N=120$ 下的样本量偏差），以及基于通用细胞分割大模型 Cellpose（\texttt{nuclei} 预训练模型）~\cite{ref_cellpose} 提取细胞核掩码的前景分割交并比（Dice $\uparrow$）与严格一对一匹配检测得分（F1@0.5 $\uparrow$）。
+评测采用 PSNR ($\uparrow$)、SSIM ($\uparrow$)、LPIPS ($\downarrow$)、无偏分布距离 KID ($\times 10^{-3}$ $\downarrow$，子集 50)、Cellpose（\texttt{nuclei} 模型）~\cite{ref_cellpose} 细胞核分割交并比 Dice ($\uparrow$) 及一对一检测 F1@0.5 ($\uparrow$)。统计显著性采用基于 $N=120$ 逐图配对结果的双侧 Wilcoxon 符号秩检验。
 
-\paragraph*{乳腺切片空核样本的统计记分说明} 在 \texttt{Breast} 测试集的 120 张切片中，存在 4 张真值完全不含细胞核的纯结缔组织/树脂切片（$\text{empty}=4$）。在统一评测脚本 \texttt{v2\_unified\_eval.py} 中，该 4 张切片的前景分割重叠直接计为 $\text{Dice}=0$；而在剔除空核切片的 116 张子集上计算的平均 Dice 记为 $\text{Dice}_{\text{ne}}$。因此全测试集平均 Dice 严格满足：
-\begin{equation}
-\text{Dice} = \frac{116}{120}\times \text{Dice}_{\text{ne}},
-\end{equation}
-例如 20-shot 下 $\text{Dice}_{\text{ne}} = 0.5768$，则全集 $\text{Dice} = 0.5768 \times \frac{116}{120} = 0.5575$，与表~\ref{tab:main_3stage} 及表~\ref{tab:breast_ablation} 数据完全吻合。其余三折器官（Brain、Kidney、Liver）空核切片数均为 0，满足 $\text{Dice} = \text{Dice}_{\text{ne}}$。
+\paragraph*{乳腺空核真值样本的记分机制} \texttt{Breast} 测试集中包含 4 例真值无任何细胞核的纯间质切片（$\text{empty}=4$）。评测脚本在前景核重叠判定中对空核切片记 $\text{Dice}=0$，而在 116 例非空切片上记平均指标为 $\text{Dice}_{\text{ne}}$，故全集平均满足严格等式 $\text{Dice} = \frac{116}{120}\times \text{Dice}_{\text{ne}}$（如 20-shot 下 $0.5768 \times \frac{116}{120} = 0.5575$）。其余三折空核切片数均为 0。
 
-\paragraph*{参数量与推理效率核算} 必须明确区分**可训练参数量**与**推理总参数量**：在 0-shot 阶段，无先验基座 \texttt{BaseFlow} 及四种经典 DG 变体（MixStyle、StainAug、DANN、MLDG）的可训练参数量均为 $1.69\text{M}$（20-shot 解冻解码器后为 $1.80\text{M}$），单图 4 步欧拉推理时延为 $12.0$--$16.7\text{ ms}$；本文 \methodname{} 的流匹配网络仅包含 $1.79\text{M}$（0-shot）与 $1.90\text{M}$（20-shot）可训练参数，但在前向推理时需挂载冻结的 UNI ViT-L/16 基础模型提取单次空间特征（UNI 权重约 $303.3\text{M}$，端到端推理总参数量约为 $305\text{M}$），在 RTX 3080 Ti (16GB) 上的端到端推理时延为 $25.2$--$30.2\text{ ms/img}$（消融变体 \texttt{UniFlow-Tok} 为 $1.96\text{M}/2.07\text{M}$ 可训练参数、$24.9$--$26.7\text{ ms/img}$）。各方法均处在毫秒级高速推理区间。
+\paragraph*{参数量与硬件平台说明} 本文主实验与四类 DG 对照均在单张 \texttt{NVIDIA RTX 3080 Ti Laptop GPU (16 GB)} 上运行完成；外部代表性基线则在 \texttt{NVIDIA RTX 5880 Ada (48 GB)} 工作站上按相同划分与评测脚本运行。在参数核算方面，无先验基座 \texttt{BaseFlow} 含 $1.69\text{M}$（0-shot）或 $1.80\text{M}$（20-shot）可训练参数，本地单图 4 步推理耗时 $12.0$--$16.7\text{ ms}$；\methodname{} 仅包含 $1.79\text{M}$（0-shot）或 $1.90\text{M}$（20-shot）可训练参数，推理期因需调用冻结 UNI ViT-L/16（约 $303.3\text{M}$），总推理参数量约为 $305.2\text{M}$，本地端到端推理耗时 $25.2$--$30.2\text{ ms/img}$（\texttt{UniFlow-Tok} 为 $1.96\text{M}/2.07\text{M}$ 可训练参数、总约 $305.4\text{M}$、耗时 $24.9$--$26.7\text{ ms/img}$）。由于外部基线推理耗时测量来自不同显卡设备，表~\ref{tab:external} 暂不混列跨硬件绝对耗时。
+% TODO [需作者核实/补数]: 外部基线（工作站 RTX 5880 Ada）与本文模型（本地 RTX 3080 Ti Laptop GPU）的 Batch=1 推理耗时采集自不同硬件，终稿需在同一显卡下统一重测并填入耗时对比列。
 
 \subsection{四器官三阶段跨器官主结果与 DG 基线对比}\label{sec:main_res}
-表~\ref{tab:main_3stage} 汇总了四个器官在 0-shot、0-shot + halfOD 与 OASRA 20-shot 三个部署阶段下，\texttt{BaseFlow}、四类经典域泛化方法（MixStyle~\cite{ref_mixstyle}、StainAug~\cite{ref_stainaug}、DANN~\cite{ref_dann}、MLDG~\cite{ref_mldg}，均加载相同骨干网络以确保严格公平受控）及本文 \methodname{} 的 72 组全量实测指标。图~\ref{fig:lomo_4organs} 与图~\ref{fig:quant} 分别展示四器官代表性定性视野与阶段演进曲线。实证结果揭示出三条清晰的核心规律：
+表~\ref{tab:main_3stage} 汇总了四个器官在 0-shot、0-shot + halfOD 与 OASRA 20-shot 三阶段下 \texttt{BaseFlow}、四类经典 DG 算法（均加载同一 NR-AE 骨干）及 \methodname{} 的 72 组实测结果，图~\ref{fig:lomo_4organs} 展示四折定性生成对比。结合定量与视觉结果，可以得出三项核心判断：
 
 \begin{table*}[!t]
 \centering
-\caption{四器官 LOMO 跨器官三阶段定量对比（\texttt{UniPrior\_v2} Clean-120 测试集；各组折内按阶段分别加粗最优值）}\label{tab:main_3stage}
+\caption{四器官 LOMO 跨器官三阶段定量对比（\texttt{UniPrior\_v2} Clean-120 测试集；折内分阶段加粗最优值）}\label{tab:main_3stage}
 \scriptsize\setlength{\tabcolsep}{4.2pt}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{ll|cccccc|cccccc}
@@ -338,52 +309,66 @@ s_c &= \Big(\frac{\bar{c}_{\text{ref}}^{(c)}}{\bar{c}_{\text{gen}}^{(c)} + \vare
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{fig2_lomo_4organs.pdf}
-\caption{四器官（\texttt{Breast}、\texttt{Brain}、\texttt{Kidney}、\texttt{Liver}）跨器官虚拟染色的定性视野对照。每行对应一个留出测试器官上的典型视野（红框标出 $64\times 64$ 细胞核/腺腔局部区域并于右下角作 2 倍放大插图）。在 0-shot 阶段 \methodname{} 相比无先验基座与 DG 变体更好地维持了组织对比度；在 20-shot（绿框列）阶段，\methodname{} 的核边界锐度与伊红基质色调最贴近真实化学 H\&E 切片。}
+\caption{四器官（\texttt{Breast}、\texttt{Brain}、\texttt{Kidney}、\texttt{Liver}）跨器官虚拟染色定性视野对照。红框标出 $64\times 64$ 细胞核/腺腔局部区域并于右下角作 2 倍放大。在 20-shot（绿框列）下，\methodname{} 的核边界锐度与伊红基质色调最接近真实 H\&E 切片。}
 \label{fig:lomo_4organs}
 \end{figure*}
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{fig4_quantitative_charts.pdf}
-\caption{四器官跨器官定量演化与消融曲线（严格基于表~\ref{tab:main_3stage} 与表~\ref{tab:breast_ablation} 实测均值绘图）。(a) 四折从 0-shot 到 20-shot 的 PSNR 跃升对比；(b) 20-shot 下 \texttt{DANN}、\texttt{MixStyle}、\texttt{BaseFlow} 与 \methodname{} 的无偏分布距离 KID（$\times 10^{-3}$，越低越好）；(c) 留出乳腺的样本效率曲线（$K \in \{0, 5, 10, 20\}$ 及 halfOD / NaiveFT 对照）；(d) 留出乳腺 20-shot 条件下生成保真度（PSNR）与稀疏背景网格伪影（\texttt{bg\_lap}）的两维权衡关系。}
-\label{fig:quant}
-\end{figure*}
-
 \begin{enumerate}
-    \item \textbf{严格 0-shot 阶段：UNI 先验稳定提升像素与感知保真，但存在器官间的指标分化。} 在未接触任何目标切片时，\methodname{} 相比 \texttt{BaseFlow} 在四折上全量改善了 PSNR 与 LPIPS：\texttt{Kidney} PSNR 从 $17.13$ 提升至 $19.20\text{ dB}$（$+2.07\text{ dB}$，KID 从 $56.02$ 降至 $44.04$）；\texttt{Liver} PSNR 从 $17.98$ 增至 $19.92\text{ dB}$（$+1.94\text{ dB}$，Dice 从 $0.5089$ 升至 $0.5380$）；\texttt{Breast} 与 \texttt{Brain} 亦分别取得 $+0.15\text{ dB}$ 与 $+0.62\text{ dB}$ 的提升且 LPIPS 显著下降。必须客观指出，在 \texttt{Brain} 折 0-shot 上，\methodname{} 的 KID 指标略有升高（$102.11$ 对 $92.39$），细胞核分割 Dice 亦发生轻微波动（$0.6989$ 对 $0.7079$）。这表明在未经目标域物理校准时，外部基础模型注入的强特征先验会拉大生成图像与目标特定染色分布间的无偏统计距离。与之相比，经典的表征域对抗基线 \texttt{DANN} 在 0-shot 下对微观解剖形态破坏严重（如 \texttt{Breast} Dice 暴跌至 $0.3392$）。
-    \item \textbf{免训练 halfOD 阶段：非对称性缓解色偏，全局统计校准伴随局部扰动。} 仅引入 5 张无配对参考切片进行半阻尼光密度校准后，跨器官伊红基质差异最大的 \texttt{Breast} 折实现飞跃：\methodname{} PSNR 由 $15.04$ 激增至 $19.83\text{ dB}$（$+4.79\text{ dB}$），KID 从 $41.25$ 显著降至 $27.77$；\texttt{Liver} 折的细胞核分割 Dice 亦从 $0.5380$ 提升至 $0.5884$。然而在源域与目标域染色本身较为接近的器官上，全局无配对色调校正常伴随轻微副作用：例如在 \texttt{Liver} 折上，\texttt{BaseFlow} 与 \methodname{} 的 KID 均发生轻度升高（\texttt{BaseFlow} 从 $24.95$ 升至 $29.45$；\methodname{} 从 $23.90$ 升至 $28.61$）。这一现象证实了免训练物理校准在极端色偏器官上的高效性，同时也论证了其在微观统计层面的局限性。
-    \item \textbf{20-shot 适配阶段：四器官全指标一致最优，全面超越无先验基座与 DG 基线。} 在仅引入 20 对非邻接配对样本并应用 OASRA 策略后，\methodname{} 在四个留出器官上均刷新了最高 PSNR（$23.87$--$24.72\text{ dB}$）、最高 SSIM（$0.7619$--$0.8318$）、最低 LPIPS（$0.1103$--$0.1562$）与最低 KID（$8.90$--$41.86\times 10^{-3}$），较同协议 \texttt{BaseFlow} 稳定高出 $+0.66$ 至 $+1.20\text{ dB}$ PSNR，并将 KID 降低 $12\%$--$16\%$。反观经典 DG 正则在 20-shot 目标监督下均未展现相较于 \texttt{BaseFlow} 的结构性增益：\texttt{DANN} 因过度挤压隐空间跨域可分性，微调后表现依然受损（\texttt{Brain} PSNR 仅 $21.33\text{ dB}$、Dice 跌至 $0.5780$）；\texttt{MixStyle} 与 \texttt{StainAug} 仅与基座持平；\texttt{MLDG} 虽在 \texttt{Breast} 上取得了略高的 Dice（$0.5618$ 对 $0.5575$），但其 PSNR、SSIM、LPIPS 及 KID 全面落后于 \methodname{}。
+    \item \textbf{严格 0-shot 下 UNI 先验稳定改善像素与感知指标，但核分割与分布距离分化明显。} 相比 \texttt{BaseFlow}，\methodname{} 在全部四折均提高了 PSNR 与 LPIPS（例如 \texttt{Kidney} PSNR $+2.07\text{ dB}$、\texttt{Liver} $+1.94\text{ dB}$）。但在未做目标风格校准时，其对细胞核分割 Dice 改善有限；在 \texttt{Brain} 上甚至导致分布距离 KID 上升（$102.11$ 对 $92.39$）、Dice 略降（$0.6989$ 对 $0.7079$）。这说明未校准的外部空间先验在结构相异器官上会拉大分布统计偏差。另外，域对抗基线 \texttt{DANN} 在 0-shot 下会严重损坏微观核结构（\texttt{Breast} Dice 跌至 $0.3392$）。
+    \item \textbf{免训练 \texttt{halfOD} 在高色偏器官与近色器官上呈非对称响应。} 针对乳腺这种与源域存在强伊红落差的器官，半阻尼校准使 \methodname{} 的 PSNR 由 $15.04$ 升至 $19.83\text{ dB}$（$+4.79\text{ dB}$），KID 从 $41.25$ 降至 $27.77$；但在源、目标染色本就接近的 \texttt{Liver} 上，全局校准反而令 KID 轻度上升（\texttt{BaseFlow} $24.95 \to 29.45$，\methodname{} $23.90 \to 28.61$）。表~\ref{tab:halfod_alpha} 给出的混合比例敏感性测试（$\alpha \in \{0.00, 0.25, 0.50, 0.75, 1.00\}$）进一步说明原因：提高 $\alpha$ 虽对乳腺与脑呈单调增益，但全校准（$\alpha=1.00$）会导致 \texttt{Kidney} 低于 0-shot 基线（$18.65$ 对 $19.20\text{ dB}$），\texttt{Liver} 亦在 $\alpha=0.50$ 处达到峰值（$20.67\text{ dB}$）后回落，证实半阻尼（$\alpha=0.50$）是兼顾多器官安全性的稳健拐点。
+    \item \textbf{20-shot OASRA 在四折关键指标上全面超越无先验基座与 DG 基线。} 引入 20 对非邻接样本后，\methodname{} 在四折均取得了最高 PSNR（$23.87$--$24.72\text{ dB}$）、最高 SSIM（$0.7619$--$0.8318$）、最低 LPIPS（$0.1103$--$0.1562$）和最低 KID（$8.90$--$41.86\times 10^{-3}$）。配对 Wilcoxon 检验表明，相对同协议 \texttt{BaseFlow}，\methodname{} 在四折上的 PSNR（$p \le 1.32\times 10^{-4}$）、SSIM（$p \le 1.28\times 10^{-5}$）与 LPIPS（$p \le 9.55\times 10^{-11}$）提升均具备高度统计显著性；核分割 Dice 在 \texttt{Brain}（$p=7.80\times 10^{-3}$）、\texttt{Kidney}（$p=1.25\times 10^{-4}$）与 \texttt{Liver}（$p=1.10\times 10^{-3}$）上亦显著优于基座（\texttt{Breast} 上 \texttt{MLDG} Dice 为 $0.5618$ 对 $0.5575$，$p=0.102$）。受隐空间强混淆影响，\texttt{DANN} 即使经 20-shot 微调仍明显落后。
 \end{enumerate}
-
-\subsection{先验注入接口、少样本规模与 OASRA 适配消融}\label{sec:ablation}
-表~\ref{tab:breast_ablation} 与图~\ref{fig:breast_zoom} 聚焦染色分布挑战最大的留出 \texttt{Breast} 折，对网络接口、样本规模与适配策略展开深入受控消融：
 
 \begin{table}[!t]
 \centering
-\caption{留出乳腺折（\texttt{Breast} Clean-120）的 UNI 注入接口、少样本规模与适配策略消融（真值 \texttt{gt\_lap=2.86}）}\label{tab:breast_ablation}
-\footnotesize\setlength{\tabcolsep}{3.2pt}
+\caption{\methodname{} 在 0-shot 阶段随 \texttt{halfOD} 混合比例 $\alpha$ 变化的四器官 PSNR ($\text{dB}\uparrow$) 敏感性（$N=120$）}\label{tab:halfod_alpha}
+\footnotesize\setlength{\tabcolsep}{4.0pt}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{llcccccc}
+\begin{tabular}{lccccc}
 \toprule
-架构 / 注入位置 & 阶段 / 策略 & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ & \texttt{bg\_lap} \\
+器官 Fold & $\alpha=0.00$（0-shot） & $\alpha=0.25$ & $\alpha=0.50$（默认） & $\alpha=0.75$ & $\alpha=1.00$（fullOD） \\
 \midrule
-\multirow{3}{*}{\texttt{BaseFlow}（无 UNI 先验）}
-& 0-shot & 14.89 & 0.7194 & 0.2887 & 43.58 & 0.5045 & 3.78 \\
-& 0-shot + halfOD & 19.56 & 0.7815 & 0.2393 & 26.75 & 0.5042 & 3.80 \\
-& OASRA (20-shot) & 23.04 & 0.8142 & 0.1732 & 10.62 & 0.5471 & \textbf{1.64} \\
+Breast & 15.04 & 17.29 & 19.83 & 21.99 & \textbf{22.39} \\
+Brain & 13.38 & 13.81 & 14.20 & 14.52 & \textbf{14.76} \\
+Kidney & 19.20 & \textbf{19.46} & 19.43 & 19.15 & 18.65 \\
+Liver & 19.92 & 20.47 & \textbf{20.67} & 20.52 & 20.10 \\
 \midrule
-\multirow{3}{*}{\texttt{UniFlow-Tok}（令牌注入）}
-& 0-shot & \textbf{15.90} & \textbf{0.7280} & \textbf{0.2387} & \textbf{34.34} & \textbf{0.5177} & 4.88 \\
-& 0-shot + halfOD & \textbf{20.57} & 0.7848 & \textbf{0.2018} & \textbf{22.11} & \textbf{0.5299} & 4.32 \\
-& OASRA (20-shot) & \textbf{24.11} & \textbf{0.8249} & \textbf{0.1520} & \textbf{8.89} & \textbf{0.5657} & 2.70 \\
+四折均值 & 16.89 & 17.76 & 18.53 & \textbf{19.05} & 18.98 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{注入接口、样本效率、频域伪影与防遗忘消融}\label{sec:ablation}
+表~\ref{tab:breast_ablation}、图~\ref{fig:breast_zoom} 与图~\ref{fig:quant} 聚焦最具染色挑战的 \texttt{Breast} 折，系统检视架构接口、样本效率、频域网格伪影以及源域防遗忘能力：
+
+\begin{table}[!t]
+\centering
+\caption{留出乳腺折（\texttt{Breast} Clean-120）的注入接口、少样本规模、单图 \texttt{bg\_lap}（真值 2.86）及全集 227 个稀疏块 2D FFT 周期网格能量消融}\label{tab:breast_ablation}
+\footnotesize\setlength{\tabcolsep}{2.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llcccccccc}
+\toprule
+架构 / 分支 & 阶段 / 策略 & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ & \texttt{bg\_lap} & \texttt{16px-FFT}(\%)$\downarrow$ & \texttt{Harm-FFT}(\%)$\downarrow$ \\
 \midrule
-\multirow{6}{*}{\textbf{\methodname{}（末端空间注入）}}
-& 0-shot & 15.04 & 0.7272 & 0.2633 & 41.25 & 0.5028 & 4.62 \\
-& 0-shot + halfOD & 19.83 & \textbf{0.7877} & 0.2156 & 27.77 & 0.5027 & 4.33 \\
-& OASRA (5-shot) & 21.34 & 0.7916 & 0.1918 & 26.26 & 0.5523 & 2.19 \\
-& OASRA (10-shot) & 22.95 & 0.8125 & 0.1681 & 13.00 & 0.5526 & 2.06 \\
-& NaiveFT (20-shot) & 23.62 & 0.8170 & 0.1645 & 11.03 & 0.5571 & 2.00 \\
-& \textbf{OASRA (20-shot)} & 23.87 & 0.8244 & 0.1562 & 8.90 & 0.5575 & 1.80 \\
+真值（GT） & -- & -- & -- & -- & -- & -- & 2.86 & 3.89\% & 2.83\% \\
+\midrule
+\multirow{3}{*}{\texttt{BaseFlow}}
+& 0-shot & 14.89 & 0.7194 & 0.2887 & 43.58 & 0.5045 & 3.78 & 5.80\% & 4.35\% \\
+& 0-shot + halfOD & 19.56 & 0.7815 & 0.2393 & 26.75 & 0.5042 & 3.80 & -- & -- \\
+& OASRA (20-shot) & 23.04 & 0.8142 & 0.1732 & 10.62 & 0.5471 & \textbf{1.64} & 6.08\% & 4.05\% \\
+\midrule
+\multirow{3}{*}{\texttt{UniFlow-Tok}}
+& 0-shot & \textbf{15.90} & \textbf{0.7280} & \textbf{0.2387} & \textbf{34.34} & \textbf{0.5177} & 4.88 & 5.84\% & 5.10\% \\
+& 0-shot + halfOD & \textbf{20.57} & 0.7848 & \textbf{0.2018} & \textbf{22.11} & \textbf{0.5299} & 4.32 & -- & -- \\
+& OASRA (20-shot) & \textbf{24.11} & \textbf{0.8249} & \textbf{0.1520} & \textbf{8.89} & \textbf{0.5657} & 2.70 & 5.90\% & 4.34\% \\
+\midrule
+\multirow{6}{*}{\textbf{\methodname{}}}
+& 0-shot & 15.04 & 0.7272 & 0.2633 & 41.25 & 0.5028 & 4.62 & \textbf{5.15\%} & \textbf{4.03\%} \\
+& 0-shot + halfOD & 19.83 & \textbf{0.7877} & 0.2156 & 27.77 & 0.5027 & 4.33 & -- & -- \\
+& OASRA (5-shot) & 21.34 & 0.7916 & 0.1918 & 26.26 & 0.5523 & 2.19 & -- & -- \\
+& OASRA (10-shot) & 22.95 & 0.8125 & 0.1681 & 13.00 & 0.5526 & 2.06 & -- & -- \\
+& NaiveFT (20-shot) & 23.62 & 0.8170 & 0.1645 & 11.03 & 0.5571 & 2.00 & 6.07\% & 3.99\% \\
+& \textbf{OASRA (20-shot)} & 23.87 & 0.8244 & 0.1562 & 8.90 & 0.5575 & 1.80 & \textbf{4.95\%} & \textbf{3.51\%} \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -391,90 +376,93 @@ s_c &= \Big(\frac{\bar{c}_{\text{ref}}^{(c)}}{\bar{c}_{\text{gen}}^{(c)} + \vare
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{fig3_breast_ablation_zoom.pdf}
-\caption{留出乳腺切片（\texttt{file\_4278.png}）从 0-shot 到 20-shot 的演进过程与稀疏背景网格伪影局部放大对比。上排为 $256\times 256$ 全图视野（红框标定边缘稀疏背景框 $[40:168, 0:128]$），下排为对应区域的 $1:1$ 最近邻放大图。第 7 列 \texttt{UniFlow-Tok}（红框标出，\texttt{bg\_lap=2.70}）在左上空白树脂背景区出现显著的 $4\times 4$ 块洗牌格子点阵；第 8 列本文 \methodname{}（绿框标出，\texttt{bg\_lap=1.80}）成功消除该背景棋盘伪影，恢复出接近真值（第 9 列）的平滑均匀胶原基质与清晰管腔边缘。}
+\caption{留出乳腺切片（\texttt{file\_4278.png}）从 0-shot 到 20-shot 的演化与稀疏背景网格伪影局部放大对比。上排为 $256\times 256$ 全图视野（红框标定稀疏背景 $[40:168, 0:128]$），下排为 $1:1$ 近邻放大。第 7 列 \texttt{UniFlow-Tok}（红框，\texttt{bg\_lap=2.70}）在左上空白树脂背景呈现清晰网格点阵；第 8 列本文 \methodname{}（绿框，\texttt{bg\_lap=1.80}）消除该背景格点，恢复近真值（第 9 列）的平滑胶原基质。}
 \label{fig:breast_zoom}
 \end{figure*}
 
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig4_quantitative_charts.pdf}
+\caption{四器官跨器官定量演化与消融汇总（基于表~\ref{tab:main_3stage} 与表~\ref{tab:breast_ablation} 实测值绘制）。(a) 四折从 0-shot 到 20-shot 的 PSNR 变化；(b) 20-shot 下四方法 KID 对比；(c) 留出乳腺的样本效率曲线（$K \in \{0, 5, 10, 20\}$ 与 halfOD / NaiveFT 对照）；(d) 乳腺 20-shot 下 PSNR 与稀疏背景伪影（\texttt{bg\_lap}）权衡关系。}
+\label{fig:quant}
+\end{figure*}
+
 \begin{enumerate}
-    \item \textbf{末端空间注入（\methodname{}）与令牌注入（\texttt{UniFlow-Tok}）的客观权衡}：实测表明，在 20-shot 下 \texttt{UniFlow-Tok} 在部分全局像素与分割指标上略占优势（PSNR $24.11$ 对 $23.87\text{ dB}$，Dice $0.5657$ 对 $0.5575$），但这完全是以**稀疏背景严重网格伪影**为代价换取的。\texttt{UniFlow-Tok} 在 20-shot 时的背景拉普拉斯伪影指标 \texttt{bg\_lap} 高达 $2.70$（在 0-shot 与 0-shot + halfOD 阶段更分别达 $4.88$ 与 $4.32$）。如图~\ref{fig:breast_zoom} 下排放大视野所示，\texttt{UniFlow-Tok} 在空白树脂区域生成了刺眼的周期性格子伪影。而本文 \methodname{} 通过末端 $64\times 64$ 深度可分离卷积平滑滤波，将 20-shot 伪影指标压制至 $1.80$（逼近无先验基座 \texttt{BaseFlow} 的 $1.64$ 且大幅低于真值的 $2.86$），彻底消除了肉眼可见的块洗牌网格。
-    % TODO [需作者核实/补数]: 表 3 中 1.80 已按要求去除加粗，因 BaseFlow 值为 1.64 且 GT 值为 2.86；目前结论完全客观呈现，请核验。
-    \item \textbf{极少样本效率阶梯（$K = 0 \to 5 \to 10 \to 20$）}：仅引入 $K=5$ 张目标切片，\methodname{} 的 PSNR 便从 0-shot 的 $15.04\text{ dB}$ 跃升至 $21.34\text{ dB}$（$+6.30\text{ dB}$），细胞核分割 Dice 跃升至 $0.5523$（超越 5 张无配对校准 halfOD 的 $19.83\text{ dB} / 0.5027$）；当样本量增加到 $10$ 与 $20$ 时，各项保真与感知指标呈现平稳单调收益。
-    \item \textbf{OASRA 联合适配策略 vs 朴素微调（\texttt{NaiveFT}）}：在同等 20-shot 预算下，关闭光密度锚定、染色增广源域回放与 SWA 的 \texttt{NaiveFT} 出现可见的源域知识遗忘：PSNR 由 $23.87$ 降至 $23.62\text{ dB}$，LPIPS 退化至 $0.1645$，KID 升高至 $11.03\times 10^{-3}$，且背景伪影指标恶化至 $2.00$。
+    \item \textbf{空间-频域双维验证：末端注入真正压平周期性网格能量}：表~\ref{tab:breast_ablation} 显示，在 20-shot 下 \texttt{UniFlow-Tok} 虽在重建像素与分割指标上略高（PSNR $24.11$ 对 $23.87\text{ dB}$，Dice $0.5657$ 对 $0.5575$），但在视觉上伴随明显棋盘格伪影（图~\ref{fig:breast_zoom} 第 7 列，\texttt{bg\_lap=2.70}）。更关键的是，全测试集 227 个自动检出稀疏背景块的 2D FFT 频谱统计揭穿了单纯 \texttt{bg\_lap} 的局限：\texttt{BaseFlow (20-shot)} 虽因背景过度平滑使空间拉普拉斯低至 $1.64$，但其在频域中的 $16\text{px}$ 网格能量占比依然高达 $6.08\%$（\texttt{UniFlow-Tok} 为 $5.90\%$）；唯有本文 \methodname{} 在 **0-shot（$5.15\%$ / $4.03\%$）与 20-shot（$4.95\%$ / $3.51\%$）** 两个阶段均取得最低周期网格能量占比，最贴近真值频谱基线（$3.89\%$ / $2.83\%$）。
+    \item \textbf{极少样本效率阶梯}：仅用 $K=5$ 对目标切片，\methodname{} PSNR 即可从 $15.04$ 跳升至 $21.34\text{ dB}$（$+6.30\text{ dB}$），核分割 Dice 升至 $0.5523$（超过 5 张无配对参考 halfOD 的 $19.83\text{ dB} / 0.5027$）；随着 $K$ 增至 $10$ 与 $20$，各指标延续稳定边际收敛。
+    \item \textbf{OASRA 策略统计检验与源域抗遗忘实证}：在 20-shot 乳腺目标域上，取消光密度锚定与回放的 \texttt{NaiveFT} 导致 PSNR 由 $23.87$ 降至 $23.62\text{ dB}$（$p=1.50\times 10^{-5}$）、SSIM 由 $0.8244$ 降至 $0.8170$（$p=1.80\times 10^{-13}$）、LPIPS 由 $0.1562$ 恶化至 $0.1645$（$p=1.30\times 10^{-10}$），同时频域网格能量回升至 $6.07\%$。为进一步验证源域保持能力，我们将微调后的两个 20-shot 模型回测至其 240 对源域验证集（Brain、Kidney、Liver 各 80 对）：预训练模型在源域基线为 PSNR $24.51\text{ dB}$ / SSIM $0.7929$ / LPIPS $0.1361$；\texttt{NaiveFT} 导致源域发生严重灾难性遗忘（PSNR 骤降 $-8.23\text{ dB}$ 至 $16.28\text{ dB}$、LPIPS 恶化至 $0.2560$），而 \texttt{OASRA} 保留了 $19.67\text{ dB}$ PSNR（高出 \texttt{NaiveFT} $+3.39\text{ dB}$）、$0.7570$ SSIM 与 $0.1858$ LPIPS（注：源域评分较预训练有所下降系源域回放中以 50\% 概率将源真值染色增广至目标风格并更新目标解码器所致）。
+    % TODO [需作者核实/补数]: 20-shot 乳腺结果与 OASRA/NaiveFT 对照目前基于单一种子实测（已补充 N=120 Wilcoxon 检验与 N=240 源域防遗忘实测），建议终稿补充 3 组随机种子均值±标准差及 OASRA 组件逐项消融（如 +OD / +Replay / +SWA）。
 \end{enumerate}
 
 \subsection{与外部代表性生成基线的跨范式对比}\label{sec:external}
-为了在更广泛的生成模型范式下检验轻量隐空间整流流匹配的竞争力，我们在同一划分（\texttt{round1\_splits.json}）与评测管线下，系统对齐五种代表性外部生成基线：条件生成对抗网络 \texttt{Pix2Pix}~\cite{ref_pix2pix}（$54.41\text{M}$ 参数）、循环对抗网络 \texttt{CycleGAN}~\cite{ref_cyclegan}（$11.38\text{M}$）、基于基础模型多尺度调制的 \texttt{UNIStainNet}~\cite{ref_unistainnet}（$42.19\text{M}$）、非配对对比学习网络 \texttt{CUT}~\cite{ref_cut}（$11.38\text{M}$）以及图像到图像薛定谔桥 \texttt{I2SB}~\cite{ref_i2sb}（ADM UNet 主干，$138.29\text{M}$，20 步采样）。
-
-表~\ref{tab:external} 完整汇报了已完成全四折评测的 \texttt{Pix2Pix}、\texttt{CycleGAN} 与 \texttt{UNIStainNet} 相对本文 \methodname{} 的跨范式实测结果（全部含 Cellpose 核分割指标）。实验揭示出两项关键范式差异：
+我们在相同划分与评测管线下引入五种外部代表性生成基线：\texttt{Pix2Pix}~\cite{ref_pix2pix}、\texttt{CycleGAN}~\cite{ref_cyclegan}、\texttt{UNIStainNet}~\cite{ref_unistainnet}、\texttt{CUT}~\cite{ref_cut} 与 \texttt{I2SB}~\cite{ref_i2sb}。表~\ref{tab:external} 完整汇报已完成四器官全阶段评测（含 Cellpose 分割）的 \texttt{Pix2Pix}、\texttt{CycleGAN} 与 \texttt{UNIStainNet} 数据：
 \begin{enumerate}
-    \item \textbf{全面超越传统像素级 GAN 基线（Pix2Pix / CycleGAN）}：在 20-shot 适配阶段，\methodname{} 在全部四个器官的所有六项指标上均大幅领先 \texttt{Pix2Pix} 与 \texttt{CycleGAN}。例如在极具挑战性的 \texttt{Breast} 上，\methodname{} 取得 $23.87\text{ dB}$ PSNR 与 $0.5575$ 核分割 Dice，显著超越 \texttt{Pix2Pix}（$21.89\text{ dB}$ / $0.4663$）与 \texttt{CycleGAN}（$22.04\text{ dB}$ / $0.4057$）；在 \texttt{Kidney} 折上核分割 Dice 领先优势更达到 $+0.0497$ 至 $+0.1739$。
-    \item \textbf{与重型多尺度基础模型基线（UNIStainNet）的范式权衡}：作为同接入冻结 UNI 特征的 $42.19\text{M}$ 像素空间 SPADE-UNet，\texttt{UNIStainNet} 在解码器多尺度层均施行空间调制并引入了对抗判别器损失。因此，\texttt{UNIStainNet} 在 0-shot 阶段于 \texttt{Breast}/\texttt{Brain}/\texttt{Kidney} 三折及四折 20-shot 分布距离 KID 上（如 \texttt{Breast} $3.78$ 对 $8.90$）展现优势；而本文 \methodname{} 仅用其 $1/22$ 的可训练参数量（$1.90\text{M}$ 对 $42.19\text{M}$），在 20-shot 适配阶段于**全部四个器官上均取得最高 PSNR（四折均值 $24.25$ 对 $23.10\text{ dB}$，领先 $+1.15\text{ dB}$）与最低 LPIPS（四折均值 $0.1236$ 对 $0.1353$）**，并在 \texttt{Breast}、\texttt{Brain} 与 \texttt{Kidney} 三折上全面超越其 SSIM、核分割 Dice 与 F1@0.5（仅在 \texttt{Liver} 上 Dice 与其基本持平：$0.7303$ 对 $0.7322$）。这一结果客观体现了“无判别器轻量隐空间流匹配”在像素结构保真、核边界精确对齐与极少样本参数效率上的独特优势。
+    \item \textbf{全面超越传统 GAN 基线}：在 20-shot 阶段，\methodname{} 在四器官全部六项指标上均显著优于 \texttt{Pix2Pix} 与 \texttt{CycleGAN}（如 \texttt{Breast} 核分割 Dice 达 $0.5575$ 对 $0.4663 / 0.4057$，\texttt{Kidney} 达 $0.7131$ 对 $0.5392 / 0.6634$）。
+    \item \textbf{与重型多尺度基础模型基线 \texttt{UNIStainNet} 的范式权衡}：\texttt{UNIStainNet} 同为调用冻结 $303.3\text{M}$ UNI ViT-L/16 主干的网络（其可训练部分为 $42.19\text{M}$，推理总参数量约 $345.5\text{M}$），通过解码器多尺度 SPADE 空间调制与多尺度 PatchGAN 对抗判别器损失，在 \texttt{Breast}/\texttt{Brain}/\texttt{Kidney} 的 0-shot 阶段以及四器官 20-shot 分布距离 KID 上占据明显优势（如 \texttt{Breast} KID $3.78$ 对 $8.90$、\texttt{Kidney} KID $14.35$ 对 $41.86$、\texttt{Brain} KID $9.11$ 对 $21.09$）。相比之下，\methodname{}（可训练仅 $1.90\text{M}$，推理总参数量约 $305.2\text{M}$）作为无判别器流匹配模型，在少样本适配后将优化重心置于像素精确对应与局部核轮廓对齐上，从而以 $1/22$ 的可训练参数量在 **全部四折上取得最高 20-shot PSNR（四折均值 $24.25$ 对 $23.10\text{ dB}$）与最低 LPIPS（四折均值 $0.1236$ 对 $0.1353$）**，并在 \texttt{Breast}、\texttt{Brain} 与 \texttt{Kidney} 三折的 SSIM、Dice 与 F1@0.5 上超越 \texttt{UNIStainNet}（\texttt{Liver} 上 Dice 为 $0.7303$ 对 $0.7322$，基本持平）。这种“分布纹理统计距离 vs 像素结构与核对齐精度”的分化，体现了有判别器像素翻译与无判别器隐空间流匹配之间的典型感知-失真权衡。
 \end{enumerate}
-表~\ref{tab:external} 中标注“\texttt{--}”的 \texttt{CUT} 与 \texttt{I2SB} 基线正在同一基准评测集群上运行中，终稿将合入其全量数据。
-% TODO [需作者核实/补数]: 表 4 中 Pix2Pix、CycleGAN 与 UNIStainNet 的四器官全阶段实测数据（含 Cellpose Dice/F1）已根据 queue2_summary.md 完整填入；待 CUT 与 I2SB（Queue-3）跑完后补充对应行并替换 '--' 占位符。
+表~\ref{tab:external} 中标注“\texttt{--}”的 \texttt{CUT} 与 \texttt{I2SB} 基线仍在基准集群计算中，待完成后补全。
+% TODO [需作者核实/补数]: 表 4 中 Pix2Pix、CycleGAN 与 UNIStainNet 已填入四折含 Dice/F1 全量实测数据；待工作站 CUT 与 I2SB（Queue-3）跑完后补充对应行并替换 '--'。
 
 \begin{table*}[!t]
 \centering
-\caption{跨范式外部生成基线与本文 \methodname{} 四器官全量对照（同划分、同评测管线；运行中待补项标为 \texttt{--}）}\label{tab:external}
-\footnotesize\setlength{\tabcolsep}{3.8pt}
+\caption{跨范式外部生成基线与本文 \methodname{} 四器官全量对照（标注可训练参数 / 推理总参数；\texttt{UNIStainNet} 与 \methodname{} 共享冻结 $303.3\text{M}$ UNI 编码器；运行中待补项标 \texttt{--}）}\label{tab:external}
+\footnotesize\setlength{\tabcolsep}{3.6pt}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{ll|cccc|cccc|cccccc}
 \toprule
-\multirow{2}{*}{器官 Fold} & \multirow{2}{*}{方法 / 模型（可训练参数）} & \multicolumn{4}{c|}{0-shot} & \multicolumn{4}{c|}{0-shot + halfOD} & \multicolumn{6}{c}{20-shot} \\
+\multirow{2}{*}{器官 Fold} & \multirow{2}{*}{方法 / 模型（可训练 / 总参数）} & \multicolumn{4}{c|}{0-shot} & \multicolumn{4}{c|}{0-shot + halfOD} & \multicolumn{6}{c}{20-shot} \\
 & & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ & F1@0.5$\uparrow$ \\
 \midrule
 \multirow{5}{*}{Breast}
-& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M） & 13.12 & 0.6860 & 0.3504 & 51.38 & 18.39 & 0.7538 & 0.2917 & 40.24 & 21.89 & 0.7388 & 0.2066 & 29.19 & 0.4663 & 0.4577 \\
-& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M） & \textbf{16.29} & 0.7314 & 0.2835 & 37.69 & 20.33 & 0.7718 & 0.2410 & 26.11 & 22.04 & 0.7696 & 0.2040 & 15.04 & 0.4057 & 0.3948 \\
-& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M） & 15.90 & \textbf{0.7415} & \textbf{0.2396} & \textbf{29.09} & \textbf{20.65} & \textbf{0.7969} & \textbf{0.1865} & \textbf{14.88} & 23.05 & 0.8046 & 0.1675 & \textbf{3.78} & 0.5404 & 0.5454 \\
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 13.12 & 0.6860 & 0.3504 & 51.38 & 18.39 & 0.7538 & 0.2917 & 40.24 & 21.89 & 0.7388 & 0.2066 & 29.19 & 0.4663 & 0.4577 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & \textbf{16.29} & 0.7314 & 0.2835 & 37.69 & 20.33 & 0.7718 & 0.2410 & 26.11 & 22.04 & 0.7696 & 0.2040 & 15.04 & 0.4057 & 0.3948 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 15.90 & \textbf{0.7415} & \textbf{0.2396} & \textbf{29.09} & \textbf{20.65} & \textbf{0.7969} & \textbf{0.1865} & \textbf{14.88} & 23.05 & 0.8046 & 0.1675 & \textbf{3.78} & 0.5404 & 0.5454 \\
 & \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \textbf{\methodname{}（1.79M/1.90M；总 305M）} & 15.04 & 0.7272 & 0.2633 & 41.25 & 19.83 & 0.7877 & 0.2156 & 27.77 & \textbf{23.87} & \textbf{0.8244} & \textbf{0.1562} & 8.90 & \textbf{0.5575} & \textbf{0.5594} \\
+& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 15.04 & 0.7272 & 0.2633 & 41.25 & 19.83 & 0.7877 & 0.2156 & 27.77 & \textbf{23.87} & \textbf{0.8244} & \textbf{0.1562} & 8.90 & \textbf{0.5575} & \textbf{0.5594} \\
 \midrule
 \multirow{5}{*}{Brain}
-& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M） & 13.84 & 0.6166 & 0.3442 & 80.11 & 14.23 & 0.6305 & 0.3365 & 79.98 & 21.34 & 0.6836 & 0.1520 & 24.27 & 0.7102 & 0.6700 \\
-& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M） & \textbf{14.43} & 0.6398 & 0.3111 & 64.18 & 14.74 & 0.6518 & 0.2996 & \textbf{60.08} & 21.19 & 0.6991 & 0.1535 & 21.30 & 0.7395 & 0.7138 \\
-& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M） & 14.24 & \textbf{0.6789} & \textbf{0.2750} & \textbf{60.80} & \textbf{15.34} & \textbf{0.6894} & \textbf{0.2590} & 63.65 & 22.36 & 0.7550 & 0.1301 & \textbf{9.11} & 0.7411 & 0.7188 \\
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 13.84 & 0.6166 & 0.3442 & 80.11 & 14.23 & 0.6305 & 0.3365 & 79.98 & 21.34 & 0.6836 & 0.1520 & 24.27 & 0.7102 & 0.6700 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & \textbf{14.43} & 0.6398 & 0.3111 & 64.18 & 14.74 & 0.6518 & 0.2996 & \textbf{60.08} & 21.19 & 0.6991 & 0.1535 & 21.30 & 0.7395 & 0.7138 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 14.24 & \textbf{0.6789} & \textbf{0.2750} & \textbf{60.80} & \textbf{15.34} & \textbf{0.6894} & \textbf{0.2590} & 63.65 & 22.36 & 0.7550 & 0.1301 & \textbf{9.11} & 0.7411 & 0.7188 \\
 & \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \textbf{\methodname{}（1.79M/1.90M；总 305M）} & 13.38 & 0.6521 & 0.3539 & 102.11 & 14.20 & 0.6594 & 0.3357 & 96.93 & \textbf{24.43} & \textbf{0.7619} & \textbf{0.1148} & 21.09 & \textbf{0.7511} & \textbf{0.7233} \\
+& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 13.38 & 0.6521 & 0.3539 & 102.11 & 14.20 & 0.6594 & 0.3357 & 96.93 & \textbf{24.43} & \textbf{0.7619} & \textbf{0.1148} & 21.09 & \textbf{0.7511} & \textbf{0.7233} \\
 \midrule
 \multirow{5}{*}{Kidney}
-& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M） & 17.05 & 0.7076 & 0.2197 & 42.57 & 17.45 & 0.7184 & 0.2023 & 43.92 & 21.23 & 0.7499 & 0.1519 & 48.98 & 0.5392 & 0.5278 \\
-& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M） & 16.06 & 0.7244 & 0.2190 & 39.02 & 18.62 & 0.7588 & 0.1626 & 31.21 & 22.36 & 0.7803 & 0.1299 & 14.61 & 0.6634 & 0.6846 \\
-& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M） & \textbf{19.21} & \textbf{0.7802} & \textbf{0.1750} & \textbf{24.15} & \textbf{20.09} & \textbf{0.7956} & \textbf{0.1534} & \textbf{21.19} & 22.82 & 0.8244 & 0.1130 & \textbf{14.35} & 0.7011 & 0.7240 \\
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 17.05 & 0.7076 & 0.2197 & 42.57 & 17.45 & 0.7184 & 0.2023 & 43.92 & 21.23 & 0.7499 & 0.1519 & 48.98 & 0.5392 & 0.5278 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 16.06 & 0.7244 & 0.2190 & 39.02 & 18.62 & 0.7588 & 0.1626 & 31.21 & 22.36 & 0.7803 & 0.1299 & 14.61 & 0.6634 & 0.6846 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & \textbf{19.21} & \textbf{0.7802} & \textbf{0.1750} & \textbf{24.15} & \textbf{20.09} & \textbf{0.7956} & \textbf{0.1534} & \textbf{21.19} & 22.82 & 0.8244 & 0.1130 & \textbf{14.35} & 0.7011 & 0.7240 \\
 & \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \textbf{\methodname{}（1.79M/1.90M；总 305M）} & 19.20 & 0.7683 & 0.2057 & 44.04 & 19.43 & 0.7765 & 0.1916 & 42.11 & \textbf{23.96} & \textbf{0.8318} & \textbf{0.1103} & 41.86 & \textbf{0.7131} & \textbf{0.7412} \\
+& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & 19.20 & 0.7683 & 0.2057 & 44.04 & 19.43 & 0.7765 & 0.1916 & 42.11 & \textbf{23.96} & \textbf{0.8318} & \textbf{0.1103} & 41.86 & \textbf{0.7131} & \textbf{0.7412} \\
 \midrule
 \multirow{5}{*}{Liver}
-& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M） & 19.09 & 0.5603 & 0.2213 & 49.35 & 19.69 & 0.5673 & 0.1988 & 42.15 & 22.44 & 0.7004 & 0.1414 & 19.21 & 0.6491 & 0.6417 \\
-& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M） & 18.85 & 0.6695 & \textbf{0.1833} & 55.67 & 20.19 & 0.6987 & \textbf{0.1770} & 49.77 & 21.62 & 0.7095 & 0.1450 & 29.18 & 0.6168 & 0.6336 \\
-& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M） & 18.33 & 0.7222 & 0.2347 & 46.94 & 19.93 & 0.7344 & 0.2014 & 33.00 & 24.18 & \textbf{0.7892} & 0.1304 & \textbf{12.28} & \textbf{0.7322} & \textbf{0.7563} \\
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M / 54.41M） & 19.09 & 0.5603 & 0.2213 & 49.35 & 19.69 & 0.5673 & 0.1988 & 42.15 & 22.44 & 0.7004 & 0.1414 & 19.21 & 0.6491 & 0.6417 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M / 11.38M） & 18.85 & 0.6695 & \textbf{0.1833} & 55.67 & 20.19 & 0.6987 & \textbf{0.1770} & 49.77 & 21.62 & 0.7095 & 0.1450 & 29.18 & 0.6168 & 0.6336 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M / 345.5M） & 18.33 & 0.7222 & 0.2347 & 46.94 & 19.93 & 0.7344 & 0.2014 & 33.00 & 24.18 & \textbf{0.7892} & 0.1304 & \textbf{12.28} & \textbf{0.7322} & \textbf{0.7563} \\
 & \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \textbf{\methodname{}（1.79M/1.90M；总 305M）} & \textbf{19.92} & \textbf{0.7369} & 0.2046 & \textbf{23.90} & \textbf{20.67} & \textbf{0.7449} & 0.1920 & \textbf{28.61} & \textbf{24.72} & 0.7831 & \textbf{0.1129} & 15.68 & 0.7303 & 0.7507 \\
+& \textbf{\methodname{}（1.79M/1.90M / 305.2M）} & \textbf{19.92} & \textbf{0.7369} & 0.2046 & \textbf{23.90} & \textbf{20.67} & \textbf{0.7449} & 0.1920 & \textbf{28.61} & \textbf{24.72} & 0.7831 & \textbf{0.1129} & 15.68 & 0.7303 & 0.7507 \\
 \bottomrule
 \end{tabular}}
 \end{table*}
 
 \section{讨论与局限性}
-\subsection{跨器官迁移中的先验引导与少样本适配边界}
-本文实验揭示了跨器官病理生成的明确层级规律：在严格 0-shot 阶段，预训练病理基础模型的宏观空间先验能够稳定维持器官基本轮廓并改善像素感知距离，但无法凭空预测未见器官的非线性染色统计特性；免训练光密度校准（halfOD）能够以零训练开销迅速修复重度色偏器官的伊红浓度失配，但在染色本就相近的器官上存在局部过校准风险；最终，仅需极少量的目标域非邻接配对监督（$K=5$ 或 $20$）并配合 OASRA 策略，模型即可迅速拉通显微细胞核拓扑与特定染色域的高精度对应。这为计算病理学在临床落地中的部署策略提供了清晰的分级指引。
+\subsection{跨器官虚拟染色的先验引导与少样本边界}
+三阶段实证勾勒出虚拟染色跨器官部署的能力边界：冻结基础模型的空间先验虽能在零样本下托底器官形态，却无法凭空推断跨器官非线性染色统计分布；基于 5 张参考切片的 \texttt{halfOD} 校准在大幅纠正高色偏器官色调的同时，于染色相近器官存在全局过校准风险（表~\ref{tab:halfod_alpha} 证实 $\alpha=0.50$ 的阻尼必要性）；引入极少量目标配对微调与 OASRA 回放，才能同步保证高像素结构精度与源域抗遗忘稳定性。
 
-\subsection{隐空间块洗牌伪影的产生机制与架构启示}
-\texttt{UniFlow-Tok} 与 \methodname{} 的消融揭示了深度隐空间生成模型中一个关键规律：外部先验的**接入尺度与空间连续性**比单纯的特征交互深度更为关键。在包含无重叠亚像素卷积（PixelShuffle）的解码链路中，粗粒度令牌级特征若直接在低分辨率空间以加性方式耦合，令牌之间的边界不连续性会被解码器多倍上采样显著放大，在平滑低频的稀疏背景中形成肉眼敏感的棋盘格伪影。将注入节点后移至 $64\times 64$ 末端并通过深度可分离卷积实施局部感受野平滑，成功在不破坏组织实质精细边缘的前提下消除了周期性格点伪影，该设计原则对同类隐空间流匹配与扩散模型架构具有普适参考价值。同时，类似 SheafStain~\cite{ref_sheafstain} 等利用层理论或几何约束维持组织拓扑一致性的思想，亦有望与本文的轻量整流流架构进一步融合。
+\subsection{隐空间块洗牌伪影的机理与架构启示}
+\texttt{UniFlow-Tok} 与 \methodname{} 的对照及全测试集 2D FFT 频谱度量提示：在基于亚像素重排（PixelShuffle）的隐空间流匹配网络中，外部空间先验的**接入尺度**直接决定了稀疏背景的频域洁净度。低分辨率令牌层的加性耦合经多层重排被放大成规则网格谐波；将其后移至 $64\times 64$ 速度场末端并用深度可分离卷积局部平滑，可从源头打断周期性误差累积。今后亦可探索引入如 SheafStain~\cite{ref_sheafstain} 所提层理论等空间拓扑正则，在抑制网格的同时进一步丰富深层时空交互。
 
-\subsection{局限性与未来工作}
-本文仍存在以下三项客观局限：（1）当前四器官主实验与域泛化基线均在固定随机种子下完成受控实测，未来需补充多随机种子测试以评估收益方差；（2）数据集基于树脂包埋小鼠组织，后续需扩展至常规福尔马林固定石蜡包埋（FFPE）人类切片及全视野数字切片（WSI）多尺度金字塔流水线；（3）外部代表性基线队列中的非配对对比平移模型（CUT）与薛定谔桥模型（I2SB）仍在统一评测集群运行中，终稿将合入其全量数据。
+\subsection{局限性}
+本文工作尚有以下边界：（1）四器官主实验与 DG 基线当前基于固定种子开展，需进一步补充多随机种子误差棒估计；（2）数据来源于树脂包埋小鼠器官并按一维切片索引间隔（$|i_{\text{val}} - i_{\text{test}}| > 1$）切分，未来工作需在严格跨动物个体/跨整片（slide-disjoint）协议下评估向人类 FFPE 临床切片的外推能力；（3）外部队列中的 \texttt{CUT} 与 \texttt{I2SB} 仍在基准集群运行，且不同设备的单图推理时延尚待统一显卡对齐重测。
 
-\section{结论与开源声明}
-本文针对跨器官少样本虚拟染色任务，提出了结合病理基础模型高分辨率末端空间先验注入的轻量隐空间整流流匹配框架 \methodname{}。在严格零空间邻接防泄露的四器官基准上，末端深度可分离注入结构在有效抑制稀疏背景网格伪影的同时保障了跨器官生成精度；配合免训练半阻尼光密度校准与 OASRA 少样本回放微调，仅需不到 2M 可训练参数与 20 对目标切片即可全面超越无先验基座与四类经典域泛化基线。全部代码、数据切分与评测管线已完全开源：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
+\section{结论}
+本文提出了融合病理基础模型高分辨率末端空间先验注入的轻量隐空间整流流匹配框架 \methodname{}。在严格消除一维切片邻接的四器官留出基准上，仅在 $64\times 64$ 速度场末端注入深度可分离平滑特征即可在频域显著压低稀疏背景周期性网格伪影；结合半阻尼光密度校准与 OASRA 少样本回放适配，仅需 $1.90\text{M}$ 可训练参数与 20 对目标样本即可全面优于无先验基座、四类经典 DG 基线及传统像素 GAN 方法，并在四折重建像素保真与三折核分割上超越重型 SPADE-UNet 模型 \texttt{UNIStainNet}。全部开源资料见：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
 
 \appendices
 \section*{补充材料}
 
-\subsection*{S1\quad 补充分布距离（FID）、非空核分割与光度相关性指标}
-主文第 IV 节以样本量无偏的 KID 指标为主。表~\ref{tab:supp_metrics} 进一步基于全量实测日志给出了 Fréchet 距离（FID$\downarrow$）、剔除无细胞核切片后的非空核分割（$\text{Dice}_{\text{ne}}\uparrow$、$\text{F1}_{\text{ne}}\uparrow$）、生成图像与真值灰度相关（$\text{PCC}_{\text{GT}}\uparrow$）、输入灰度相关（$\text{PCC}_{\text{PI}}$）以及 Cellpose 检测细胞核数量相关系数（$\text{Count-}r\uparrow$）。
-
-数据清晰表明：在 20-shot 阶段，\methodname{} 在 Brain（$55.84$）、Kidney（$71.53$）与 Liver（$41.83$）三个器官上均取得了全部对比方法中的最低 FID；在 Breast 折上取得 $65.19$（仅略高于令牌注入变体 \texttt{UniFlow-Tok} 的 $63.28$，但如主文所述，\methodname{} 具有显著更优的背景网格伪影控制能力）。同时，\methodname{} 在全部四折上保持了最高或近乎最高的真值灰度相关 $\text{PCC}_{\text{GT}}$（$0.8159$--$0.9627$）与细胞核数量相关（Kidney $0.8726$、Liver $0.9050$）。
-% TODO [需作者核实/补数]: 表 S1 中已补全 UniFlow 在 Breast 0-shot 下的 FID、Dice_ne 等指标（源自 round1_summary.json 实测日志），请作者核验。
+\subsection*{S1\quad 补充分布距离（FID）、非空核分割与相关性指标}
+表~\ref{tab:supp_metrics} 汇总了基于 $N=120$ 测试集的 Fréchet 距离（FID$\downarrow$）、剔除无细胞核空白样本后的非空核分割（$\text{Dice}_{\text{ne}}\uparrow$、$\text{F1}_{\text{ne}}\uparrow$）、灰度相关系数（$\text{PCC}_{\text{GT}}$、$\text{PCC}_{\text{PI}}$）以及逐图检测细胞核数量相关系数（$\text{Count-}r$）。在 20-shot 阶段，\methodname{} 在 Brain（$55.84$）、Kidney（$71.53$）与 Liver（$41.83$）取得最低 FID；在 Breast 取得 $65.19$（略高于 \texttt{UniFlow-Tok} 的 $63.28$，但后者存在明显背景周期网格伪影）。
+% TODO [需作者核实/补数]: 表 S1 中 Breast 0-shot 行的 UniFlow 指标（FID=102.71 等）源自 round1_summary.json 实测日志，请作者最终核验。
 
 \begin{table*}[!t]
 \centering
@@ -524,12 +512,12 @@ s_c &= \Big(\frac{\bar{c}_{\text{ref}}^{(c)}}{\bar{c}_{\text{gen}}^{(c)} + \vare
 \end{tabular}}
 \end{table*}
 
-\subsection*{S2\quad 模型可训练参数量、推理延迟与训练耗时明细}
-表~\ref{tab:supp_complexity} 详细列出各方法在单张 NVIDIA RTX 3080 Ti (16GB) 上实测的可训练参数量、总参数量、Batch=1 单图推理时延及单折典型耗时。免训练光密度校准（\texttt{0-shot + halfOD}）在已生成图像上执行，单折仅需耗时 $2.0$--$2.3\text{ s}$。
+\subsection*{S2\quad 模型参数量与 RTX 3080 Ti Laptop 推理耗时明细}
+表~\ref{tab:supp_complexity} 列出主干与 DG 变体在单张 \texttt{NVIDIA RTX 3080 Ti Laptop GPU (16 GB)} 上实测的可训练参数、总参数与 Batch=1 端到端推理时延。免训练校准 \texttt{halfOD} 在已生成图上执行耗时 $2.0$--$2.3\text{ s}$。
 
 \begin{table}[!t]
 \centering
-\caption{各方法参数量与推理时延明细（RTX 3080 Ti 实测）}\label{tab:supp_complexity}
+\caption{主干与域泛化变体参数量与推理速度区间（RTX 3080 Ti Laptop 实测）}\label{tab:supp_complexity}
 \footnotesize\setlength{\tabcolsep}{3.0pt}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccc}
@@ -539,27 +527,21 @@ s_c &= \Big(\frac{\bar{c}_{\text{ref}}^{(c)}}{\bar{c}_{\text{gen}}^{(c)} + \vare
 \texttt{BaseFlow} & $1.688\text{M} / 1.798\text{M}$ & $\sim 1.8\text{M}$ & $12.00$--$14.32$ & $\sim 4.1$--$8.8\text{ min}$ \\
 \texttt{MixStyle / StainAug / DANN} & $1.688\text{M} / 1.797\text{M}$ & $\sim 1.8\text{M}$ & $12.07$--$16.73$ & $\sim 4.4$--$10.5\text{ min}$ \\
 \texttt{MLDG}（一阶元学习） & $1.688\text{M} / 1.797\text{M}$ & $\sim 1.8\text{M}$ & $12.02$--$13.93$ & $\sim 8.2$--$13.7\text{ min}$ \\
-\texttt{UniFlow-Tok} & $1.959\text{M} / 2.068\text{M}$ & $\sim 305\text{M}$ & $24.92$--$26.68$ & $\sim 7.5\text{ min}$ \\
-\textbf{\methodname{}} & $1.789\text{M} / 1.898\text{M}$ & $\sim 305\text{M}$ & $25.16$--$30.21$ & $\sim 5.6$--$9.9\text{ min}$ \\
+\texttt{UniFlow-Tok} & $1.959\text{M} / 2.068\text{M}$ & $\sim 305.4\text{M}$ & $24.92$--$26.68$ & $\sim 7.5\text{ min}$ \\
+\textbf{\methodname{}} & $1.789\text{M} / 1.898\text{M}$ & $\sim 305.2\text{M}$ & $25.16$--$30.21$ & $\sim 5.6$--$9.9\text{ min}$ \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
 \subsection*{S3\quad 四类经典域泛化基线实现细节}
-为剥离主干网络容量与隐空间维度的干扰，四种 DG 基线均直接加载同款 NR-AE 编解码器（$d=192$）：
-\begin{itemize}
-    \item \textbf{MixStyle}~\cite{ref_mixstyle}：在每个源训练批次中，以概率 $p=0.5$ 抽取不同源器官样本的空间令牌均值与方差，实施 $\text{Beta}(0.1, 0.1)$ 线性插值；
-    \item \textbf{StainAug}~\cite{ref_stainaug}：在训练对 $(x_s, y_s)$ 上依据 Ruifrok 矩阵对 H/E 双通道浓度图施加 $\exp(\mathcal{U}(-0.18, 0.18))$ 的随机乘性扰动；
-    \item \textbf{DANN}~\cite{ref_dann}：在 Transformer 全局池化特征处挂载梯度反转层（GRL）与三器官判别分类头，对抗混淆源器官标签；
-    \item \textbf{MLDG}~\cite{ref_mldg}：每步将 3 个源器官拆分为 2 个元训练域与 1 个虚拟元测试域，计算虚拟测试损失并执行一阶元梯度修正。
-\end{itemize}
+所有 DG 变体均复用同折预训练 NR-AE（$d=192$）：\textbf{MixStyle}~\cite{ref_mixstyle} 以概率 $p=0.5$ 对跨器官空间令牌均值/方差执行 $\text{Beta}(0.1, 0.1)$ 插值；\textbf{StainAug}~\cite{ref_stainaug} 按 Ruifrok 矩阵在 H/E 浓度域施加 $\exp(\mathcal{U}(-0.18, 0.18))$ 乘性扰动；\textbf{DANN}~\cite{ref_dann} 在全局池化表征挂载 GRL 与三器官分类头；\textbf{MLDG}~\cite{ref_mldg} 每步将 3 个源器官划为 2 个元训练域与 1 个虚拟元测试域执行一阶梯度对齐。
 
-\subsection*{S4\quad 零空间邻接切分清单与数据集核验}
-表~\ref{tab:supp_splits} 给出四器官在 \texttt{round1\_splits.json} 下的切片数量核验、空核真值切片数以及真值稀疏背景拉普拉斯基线 \texttt{gt\_bg\_lap}。全部四折均满足验证适配池与测试集的切片索引间隔 $|i_{\text{val}} - i_{\text{test}}| > 1$，空间邻接泄露严格为 0。
+\subsection*{S4\quad 零一维邻接切分核验清单}
+表~\ref{tab:supp_splits} 给出四折在 \texttt{round1\_splits.json} 下的切分数量、空核真值样本与 \texttt{gt\_bg\_lap}，四折均满足 $|i_{\text{val}} - i_{\text{test}}| > 1$。
 
 \begin{table}[!t]
 \centering
-\caption{四器官 \texttt{UniPrior\_v2} 零邻接切分核验清单}\label{tab:supp_splits}
+\caption{四器官 \texttt{UniPrior\_v2} 零一维索引邻接核验清单}\label{tab:supp_splits}
 \footnotesize\setlength{\tabcolsep}{3.2pt}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccccc}
@@ -574,8 +556,8 @@ Liver & 480 / 80 / 120 & 20 & 5 & 0 & 0 & 15.740 \\
 \end{tabular}}
 \end{table}
 
-\subsection*{S5\quad 开源工程配置键名与学术命名映射表}
-为确保从论文到代码库的无缝复现与对照，表~\ref{tab:supp_naming} 列出论文学术命名与代码内部配置键名的映射关系。开源仓库根目录包含：\texttt{scripts/} 包含核心训练与统一评测脚本；\texttt{third\_party\_official/} 维护官方对比基线（\texttt{CUT}、\texttt{I2SB}、\texttt{UNIStainNet} 与 \texttt{pytorch\_CycleGAN\_and\_pix2pix}）；\texttt{results/} 归档全量实测指标（CSV/JSON/Markdown）与多器官高分辨率拼接图；\texttt{paper/} 包含全部论文 LaTeX 源码与图表构建脚本。
+\subsection*{S5\quad 开源代码配置键名与学术命名对照}
+表~\ref{tab:supp_naming} 给出正文学术命名与开源仓库代码键名的对应关系。仓库根目录中 \texttt{scripts/} 包含训练与评测管线，\texttt{third\_party\_official/} 保留官方上游基线，\texttt{results/} 归档完整实测数据，\texttt{paper/} 包含本文 LaTeX 源码与图表脚本。
 
 \begin{table}[!t]
 \centering
@@ -592,7 +574,7 @@ Liver & 480 / 80 / 120 & 20 & 5 & 0 & 0 & 15.740 \\
 0-shot + halfOD & \texttt{0shot\_halfOD} & 5 张无配对参考切片半阻尼光密度校准 \\
 OASRA & \texttt{m6} & 光密度锚定源域回放自适应微调策略 \\
 NaiveFT & \texttt{naive\_ft} & 关闭回放、锚定与 SWA 的朴素少样本微调 \\
-NR-AE & \texttt{Codec} & 四倍空间压缩噪声正则化自编码器 \\
+NR-AE & \texttt{Codec} & 四倍空间压缩噪声正则化卷积自编码器 \\
 SWA & \texttt{SwadAccumulator} & 固定步长起步的随机权重平均器 \\
 \bottomrule
 \end{tabular}}
