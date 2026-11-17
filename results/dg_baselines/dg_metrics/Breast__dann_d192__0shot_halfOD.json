@@ -1,0 +1,31 @@
+{
+  "run_tag": "Breast__dann_d192__0shot_halfOD",
+  "fold": "Breast",
+  "method": "dann",
+  "dim": 192,
+  "stage": "0shot_halfOD",
+  "k_shot": 5,
+  "n_test": 120,
+  "config_hash": "733198185048",
+  "split_hash": "9dc987370bef",
+  "sparse_bg_lap": 4.674,
+  "gt_bg_lap": 2.863,
+  "trainable_params_m": 1.688,
+  "latency_bs1_ms": 12.74,
+  "wall_seconds": 2.11,
+  "metrics": {
+    "psnr": 18.23671209690615,
+    "ssim": 0.7399313181638718,
+    "lpips": 0.33012451554338135,
+    "kid": 0.06423994153738022,
+    "nuclei_dice": 0.3208288037218153,
+    "nuclei_f1_05": 0.19697913410665815,
+    "fid": 131.4768829345703,
+    "nuclei_dice_nonempty": 0.3232711762639469,
+    "nuclei_f1_05_nonempty": 0.19515082838619813,
+    "empty_gt_count": 4.0,
+    "pcc_gt": 0.8707739079991976,
+    "pcc_pi": 0.9938610255718231,
+    "nuclei_count_r": 0.4125691568562826
+  }
+}

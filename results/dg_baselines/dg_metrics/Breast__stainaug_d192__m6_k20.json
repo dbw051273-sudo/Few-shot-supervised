@@ -1,0 +1,31 @@
+{
+  "run_tag": "Breast__stainaug_d192__m6_k20",
+  "fold": "Breast",
+  "method": "stainaug",
+  "dim": 192,
+  "stage": "20shot",
+  "k_shot": 20,
+  "n_test": 120,
+  "config_hash": "c39433c9caa9",
+  "split_hash": "9dc987370bef",
+  "sparse_bg_lap": 1.713,
+  "gt_bg_lap": 2.863,
+  "trainable_params_m": 1.797,
+  "latency_bs1_ms": 14.82,
+  "wall_seconds": 134.7,
+  "metrics": {
+    "psnr": 23.133937713071063,
+    "ssim": 0.8145427977045377,
+    "lpips": 0.17263489036510388,
+    "kid": 0.010973875410854816,
+    "nuclei_dice": 0.5493211376791199,
+    "nuclei_f1_05": 0.5521122729822856,
+    "fid": 69.40274047851562,
+    "nuclei_dice_nonempty": 0.5596425562197792,
+    "nuclei_f1_05_nonempty": 0.5625299375678816,
+    "empty_gt_count": 4.0,
+    "pcc_gt": 0.9017717778682709,
+    "pcc_pi": 0.9249646127223968,
+    "nuclei_count_r": 0.6381948676600162
+  }
+}

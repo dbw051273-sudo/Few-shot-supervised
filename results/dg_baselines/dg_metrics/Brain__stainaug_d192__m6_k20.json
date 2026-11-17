@@ -1,0 +1,31 @@
+{
+  "run_tag": "Brain__stainaug_d192__m6_k20",
+  "fold": "Brain",
+  "method": "stainaug",
+  "dim": 192,
+  "stage": "20shot",
+  "k_shot": 20,
+  "n_test": 120,
+  "config_hash": "c14adc0499e6",
+  "split_hash": "d1be04aba0a3",
+  "sparse_bg_lap": 4.386,
+  "gt_bg_lap": 7.282,
+  "trainable_params_m": 1.797,
+  "latency_bs1_ms": 14.59,
+  "wall_seconds": 246.55,
+  "metrics": {
+    "psnr": 23.81502066987514,
+    "ssim": 0.7569197669625283,
+    "lpips": 0.1265885676567753,
+    "kid": 0.026189761236310005,
+    "nuclei_dice": 0.7417791972557704,
+    "nuclei_f1_05": 0.7129294785408047,
+    "fid": 62.44402313232422,
+    "nuclei_dice_nonempty": 0.7417791972557704,
+    "nuclei_f1_05_nonempty": 0.7129294785408047,
+    "empty_gt_count": 0.0,
+    "pcc_gt": 0.7904306655128797,
+    "pcc_pi": 0.7680936376253764,
+    "nuclei_count_r": 0.904917302346026
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "run_tag": "liver__dann_d192__m6_k20",
+  "fold": "liver",
+  "method": "dann",
+  "dim": 192,
+  "stage": "20shot",
+  "k_shot": 20,
+  "n_test": 120,
+  "config_hash": "949dc310ab6a",
+  "split_hash": "ae7c93fe4cbe",
+  "sparse_bg_lap": 6.252,
+  "gt_bg_lap": 15.74,
+  "trainable_params_m": 1.797,
+  "latency_bs1_ms": 15.21,
+  "wall_seconds": 494.9,
+  "metrics": {
+    "psnr": 22.476307366350454,
+    "ssim": 0.7522022157907486,
+    "lpips": 0.15841625432173412,
+    "kid": 0.02905581332743168,
+    "nuclei_dice": 0.6677328715100884,
+    "nuclei_f1_05": 0.6990406767282183,
+    "fid": 60.410194396972656,
+    "nuclei_dice_nonempty": 0.6677328715100884,
+    "nuclei_f1_05_nonempty": 0.6990406767282183,
+    "empty_gt_count": 0.0,
+    "pcc_gt": 0.8930501197775205,
+    "pcc_pi": 0.9178063775102298,
+    "nuclei_count_r": 0.8166806515936822
+  }
+}

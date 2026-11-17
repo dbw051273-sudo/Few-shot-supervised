@@ -1,0 +1,31 @@
+{
+  "run_tag": "Kidney__stainaug_d192__m6_k20",
+  "fold": "Kidney",
+  "method": "stainaug",
+  "dim": 192,
+  "stage": "20shot",
+  "k_shot": 20,
+  "n_test": 120,
+  "config_hash": "36c3b6166876",
+  "split_hash": "8c810bd4fe78",
+  "sparse_bg_lap": 6.484,
+  "gt_bg_lap": 10.755,
+  "trainable_params_m": 1.797,
+  "latency_bs1_ms": 12.07,
+  "wall_seconds": 355.56,
+  "metrics": {
+    "psnr": 23.13939884269687,
+    "ssim": 0.8209864596525828,
+    "lpips": 0.12220722815642754,
+    "kid": 0.048580680042505264,
+    "nuclei_dice": 0.7066414101670185,
+    "nuclei_f1_05": 0.7334032584729688,
+    "fid": 78.37117004394531,
+    "nuclei_dice_nonempty": 0.7066414101670185,
+    "nuclei_f1_05_nonempty": 0.7334032584729688,
+    "empty_gt_count": 0.0,
+    "pcc_gt": 0.9562760829925537,
+    "pcc_pi": 0.854681600133578,
+    "nuclei_count_r": 0.8315468544807773
+  }
+}

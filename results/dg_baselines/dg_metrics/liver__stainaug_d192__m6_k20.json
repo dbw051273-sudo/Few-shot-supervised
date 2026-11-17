@@ -1,0 +1,31 @@
+{
+  "run_tag": "liver__stainaug_d192__m6_k20",
+  "fold": "liver",
+  "method": "stainaug",
+  "dim": 192,
+  "stage": "20shot",
+  "k_shot": 20,
+  "n_test": 120,
+  "config_hash": "d68070516afb",
+  "split_hash": "ae7c93fe4cbe",
+  "sparse_bg_lap": 7.785,
+  "gt_bg_lap": 15.74,
+  "trainable_params_m": 1.797,
+  "latency_bs1_ms": 14.4,
+  "wall_seconds": 469.57,
+  "metrics": {
+    "psnr": 23.946480553304447,
+    "ssim": 0.7752302040656408,
+    "lpips": 0.12285905076811711,
+    "kid": 0.01910286583006382,
+    "nuclei_dice": 0.7221523865126074,
+    "nuclei_f1_05": 0.7449479674669803,
+    "fid": 45.262760162353516,
+    "nuclei_dice_nonempty": 0.7221523865126074,
+    "nuclei_f1_05_nonempty": 0.7449479674669803,
+    "empty_gt_count": 0.0,
+    "pcc_gt": 0.9159020245075226,
+    "pcc_pi": 0.8660489837328593,
+    "nuclei_count_r": 0.8910697547846996
+  }
+}

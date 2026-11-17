@@ -1,0 +1,35 @@
+{
+  "size": 256,
+  "total_masks": 680,
+  "organs": {
+    "liver": {
+      "count": 120,
+      "median_nuclei": 51.0,
+      "mean_nuclei": 53.87,
+      "mean_fg_pct": 8.47,
+      "zero_mask_images": 0
+    },
+    "Kidney": {
+      "count": 120,
+      "median_nuclei": 109.0,
+      "mean_nuclei": 111.12,
+      "mean_fg_pct": 9.27,
+      "zero_mask_images": 0
+    },
+    "Brain": {
+      "count": 120,
+      "median_nuclei": 48.0,
+      "mean_nuclei": 62.92,
+      "mean_fg_pct": 11.27,
+      "zero_mask_images": 0
+    },
+    "Breast": {
+      "count": 320,
+      "median_nuclei": 55.5,
+      "mean_nuclei": 63.01,
+      "mean_fg_pct": 5.79,
+      "zero_mask_images": 14
+    }
+  },
+  "elapsed_s": 203.11
+}

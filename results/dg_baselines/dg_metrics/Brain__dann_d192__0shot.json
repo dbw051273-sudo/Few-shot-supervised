@@ -1,0 +1,31 @@
+{
+  "run_tag": "Brain__dann_d192__0shot",
+  "fold": "Brain",
+  "method": "dann",
+  "dim": 192,
+  "stage": "0shot",
+  "k_shot": 0,
+  "n_test": 120,
+  "config_hash": "6c1b6a18f502",
+  "split_hash": "d1be04aba0a3",
+  "sparse_bg_lap": 4.069,
+  "gt_bg_lap": 7.282,
+  "trainable_params_m": 1.688,
+  "latency_bs1_ms": 13.66,
+  "wall_seconds": 135.23,
+  "metrics": {
+    "psnr": 11.971210173345435,
+    "ssim": 0.5769113333274921,
+    "lpips": 0.43636462092399597,
+    "kid": 0.2413153350353241,
+    "nuclei_dice": 0.6100878794367115,
+    "nuclei_f1_05": 0.5432909886219094,
+    "fid": 225.6121826171875,
+    "nuclei_dice_nonempty": 0.6100878794367115,
+    "nuclei_f1_05_nonempty": 0.5432909886219094,
+    "empty_gt_count": 0.0,
+    "pcc_gt": 0.6268462605774403,
+    "pcc_pi": 0.9958422303199768,
+    "nuclei_count_r": 0.7726873946197472
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "run_tag": "Breast__mldg_d192__0shot_halfOD",
+  "fold": "Breast",
+  "method": "mldg",
+  "dim": 192,
+  "stage": "0shot_halfOD",
+  "k_shot": 5,
+  "n_test": 120,
+  "config_hash": "541045d1974a",
+  "split_hash": "9dc987370bef",
+  "sparse_bg_lap": 4.274,
+  "gt_bg_lap": 2.863,
+  "trainable_params_m": 1.688,
+  "latency_bs1_ms": 12.87,
+  "wall_seconds": 2.15,
+  "metrics": {
+    "psnr": 19.72594132492605,
+    "ssim": 0.7821763103206952,
+    "lpips": 0.2294547252357006,
+    "kid": 0.024486936628818512,
+    "nuclei_dice": 0.515760055060188,
+    "nuclei_f1_05": 0.5208114148238855,
+    "fid": 86.4909439086914,
+    "nuclei_dice_nonempty": 0.533544884545022,
+    "nuclei_f1_05_nonempty": 0.5387704291281574,
+    "empty_gt_count": 4.0,
+    "pcc_gt": 0.886841568350792,
+    "pcc_pi": 0.9046642978986105,
+    "nuclei_count_r": 0.6017885504605203
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "run_tag": "liver__u0_base_d192__m6_k20",
+  "fold": "liver",
+  "arch": "u0_base",
+  "dim": 192,
+  "stage": "20shot",
+  "strategy": "m6",
+  "k_shot": 20,
+  "eval_n": 120,
+  "config_hash": "b24f672cd2b4",
+  "split_hash": "ae7c93fe4cbe",
+  "sparse_bg_lap": 7.282,
+  "gt_bg_lap": 15.7402,
+  "trainable_params_m": 1.7975,
+  "latency_bs1_ms": 13.21,
+  "wall_seconds": 408.15,
+  "metrics": {
+    "psnr": 23.522875480125563,
+    "ssim": 0.7725205719470978,
+    "lpips": 0.1230736336360375,
+    "fid": 44.35832595825195,
+    "kid": 0.01803191564977169,
+    "nuclei_dice": 0.726065893471241,
+    "nuclei_f1_05": 0.7477908310871209,
+    "nuclei_dice_nonempty": 0.726065893471241,
+    "nuclei_f1_05_nonempty": 0.7477908310871209,
+    "empty_gt_count": 0,
+    "pcc_gt": 0.9161204094688098,
+    "pcc_pi": 0.8628942996263504,
+    "nuclei_count_r": 0.9008111172887766
+  },
+  "paper_core_keys": [
+    "psnr",
+    "ssim",
+    "lpips",
+    "kid",
+    "nuclei_dice",
+    "nuclei_f1_05"
+  ],
+  "timestamp": "2026-11-17T00:15:42.311572"
+}

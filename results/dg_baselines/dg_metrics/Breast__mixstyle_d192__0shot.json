@@ -1,0 +1,31 @@
+{
+  "run_tag": "Breast__mixstyle_d192__0shot",
+  "fold": "Breast",
+  "method": "mixstyle",
+  "dim": 192,
+  "stage": "0shot",
+  "k_shot": 0,
+  "n_test": 120,
+  "config_hash": "a6a29497efe5",
+  "split_hash": "9dc987370bef",
+  "sparse_bg_lap": 3.683,
+  "gt_bg_lap": 2.863,
+  "trainable_params_m": 1.688,
+  "latency_bs1_ms": 15.86,
+  "wall_seconds": 152.86,
+  "metrics": {
+    "psnr": 13.595574813642505,
+    "ssim": 0.7010916230579217,
+    "lpips": 0.3203708652406931,
+    "kid": 0.04621986299753189,
+    "nuclei_dice": 0.5004445810181399,
+    "nuclei_f1_05": 0.5097442913031219,
+    "fid": 108.97113037109375,
+    "nuclei_dice_nonempty": 0.5177012907084206,
+    "nuclei_f1_05_nonempty": 0.527321680658402,
+    "empty_gt_count": 4.0,
+    "pcc_gt": 0.8440412317713102,
+    "pcc_pi": 0.8359972213705381,
+    "nuclei_count_r": 0.5012861584286276
+  }
+}
