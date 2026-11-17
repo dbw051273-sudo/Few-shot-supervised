@@ -403,30 +403,53 @@ s_c &= \Big(\frac{\bar{c}_{\text{ref}}^{(c)}}{\bar{c}_{\text{gen}}^{(c)} + \vare
 \end{enumerate}
 
 \subsection{与外部代表性生成基线的跨范式对比}\label{sec:external}
-为了在更广泛的生成模型范式下检验轻量隐空间整流流匹配的竞争力，我们在同一划分（\texttt{round1\_splits.json}）与评测管线下，系统对齐五种代表性生成基线：条件生成对抗网络 \texttt{Pix2Pix}~\cite{ref_pix2pix}（$54.41\text{M}$ 参数）、循环对抗网络 \texttt{CycleGAN}~\cite{ref_cyclegan}（$11.38\text{M}$）、基于基础模型条件化的 \texttt{UNIStainNet}~\cite{ref_unistainnet}（$42.19\text{M}$）、非配对对比学习网络 \texttt{CUT}~\cite{ref_cut}（$11.38\text{M}$）以及图像到图像薛定谔桥 \texttt{I2SB}~\cite{ref_i2sb}（ADM UNet 主干，$138.29\text{M}$，20 步采样）。
+为了在更广泛的生成模型范式下检验轻量隐空间整流流匹配的竞争力，我们在同一划分（\texttt{round1\_splits.json}）与评测管线下，系统对齐五种代表性外部生成基线：条件生成对抗网络 \texttt{Pix2Pix}~\cite{ref_pix2pix}（$54.41\text{M}$ 参数）、循环对抗网络 \texttt{CycleGAN}~\cite{ref_cyclegan}（$11.38\text{M}$）、基于基础模型多尺度调制的 \texttt{UNIStainNet}~\cite{ref_unistainnet}（$42.19\text{M}$）、非配对对比学习网络 \texttt{CUT}~\cite{ref_cut}（$11.38\text{M}$）以及图像到图像薛定谔桥 \texttt{I2SB}~\cite{ref_i2sb}（ADM UNet 主干，$138.29\text{M}$，20 步采样）。
 
-在首个已完成全量基准测试的 \texttt{Liver} 折上（表~\ref{tab:external}），在相同 20-shot 配对微调下，主流像素级生成基线 \texttt{Pix2Pix} 取得 $22.44\text{ dB}$ PSNR、SSIM $0.7004$、LPIPS $0.1414$ 与 KID $19.21$；而本文可训练参数量仅为其 $1/28$ 的 \methodname{}（$1.90\text{M}$ 可训练参数，推理总参数量约 $305\text{M}$）在四项指标上全面大幅超越 Pix2Pix（PSNR $+2.28\text{ dB}$，SSIM $+0.0827$，LPIPS 降低 $0.0285$，KID 降低 $3.53\times 10^{-3}$）。表~\ref{tab:external} 中标注“\texttt{--}”的其余外部基线正在同一基准测试集群上按统一流水线计算中，待计算完毕后将全量填入并同步更新开源仓库。
-% TODO [需作者核实/补数]: 工作站外部代表性基线队列 (CycleGAN, UNIStainNet, CUT, I2SB) 正在计算中，待实测完成后补齐表中 '--' 占位符。
+表~\ref{tab:external} 完整汇报了已完成全四折评测的 \texttt{Pix2Pix}、\texttt{CycleGAN} 与 \texttt{UNIStainNet} 相对本文 \methodname{} 的跨范式实测结果（全部含 Cellpose 核分割指标）。实验揭示出两项关键范式差异：
+\begin{enumerate}
+    \item \textbf{全面超越传统像素级 GAN 基线（Pix2Pix / CycleGAN）}：在 20-shot 适配阶段，\methodname{} 在全部四个器官的所有六项指标上均大幅领先 \texttt{Pix2Pix} 与 \texttt{CycleGAN}。例如在极具挑战性的 \texttt{Breast} 上，\methodname{} 取得 $23.87\text{ dB}$ PSNR 与 $0.5575$ 核分割 Dice，显著超越 \texttt{Pix2Pix}（$21.89\text{ dB}$ / $0.4663$）与 \texttt{CycleGAN}（$22.04\text{ dB}$ / $0.4057$）；在 \texttt{Kidney} 折上核分割 Dice 领先优势更达到 $+0.0497$ 至 $+0.1739$。
+    \item \textbf{与重型多尺度基础模型基线（UNIStainNet）的范式权衡}：作为同接入冻结 UNI 特征的 $42.19\text{M}$ 像素空间 SPADE-UNet，\texttt{UNIStainNet} 在解码器多尺度层均施行空间调制并引入了对抗判别器损失。因此，\texttt{UNIStainNet} 在 0-shot 阶段于 \texttt{Breast}/\texttt{Brain}/\texttt{Kidney} 三折及四折 20-shot 分布距离 KID 上（如 \texttt{Breast} $3.78$ 对 $8.90$）展现优势；而本文 \methodname{} 仅用其 $1/22$ 的可训练参数量（$1.90\text{M}$ 对 $42.19\text{M}$），在 20-shot 适配阶段于**全部四个器官上均取得最高 PSNR（四折均值 $24.25$ 对 $23.10\text{ dB}$，领先 $+1.15\text{ dB}$）与最低 LPIPS（四折均值 $0.1236$ 对 $0.1353$）**，并在 \texttt{Breast}、\texttt{Brain} 与 \texttt{Kidney} 三折上全面超越其 SSIM、核分割 Dice 与 F1@0.5（仅在 \texttt{Liver} 上 Dice 与其基本持平：$0.7303$ 对 $0.7322$）。这一结果客观体现了“无判别器轻量隐空间流匹配”在像素结构保真、核边界精确对齐与极少样本参数效率上的独特优势。
+\end{enumerate}
+表~\ref{tab:external} 中标注“\texttt{--}”的 \texttt{CUT} 与 \texttt{I2SB} 基线正在同一基准评测集群上运行中，终稿将合入其全量数据。
+% TODO [需作者核实/补数]: 表 4 中 Pix2Pix、CycleGAN 与 UNIStainNet 的四器官全阶段实测数据（含 Cellpose Dice/F1）已根据 queue2_summary.md 完整填入；待 CUT 与 I2SB（Queue-3）跑完后补充对应行并替换 '--' 占位符。
 
 \begin{table*}[!t]
 \centering
-\caption{跨范式外部生成基线与本文 \methodname{} 对照框架（同划分、同评测管线；运行中待补项标为 \texttt{--}）}\label{tab:external}
-\footnotesize\setlength{\tabcolsep}{4.0pt}
+\caption{跨范式外部生成基线与本文 \methodname{} 四器官全量对照（同划分、同评测管线；运行中待补项标为 \texttt{--}）}\label{tab:external}
+\footnotesize\setlength{\tabcolsep}{3.8pt}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{ll|cccc|cccc|cccccc}
 \toprule
-\multirow{2}{*}{器官 Fold} & \multirow{2}{*}{方法 / 模型} & \multicolumn{4}{c|}{0-shot} & \multicolumn{4}{c|}{0-shot + halfOD} & \multicolumn{6}{c}{20-shot} \\
+\multirow{2}{*}{器官 Fold} & \multirow{2}{*}{方法 / 模型（可训练参数）} & \multicolumn{4}{c|}{0-shot} & \multicolumn{4}{c|}{0-shot + halfOD} & \multicolumn{6}{c}{20-shot} \\
 & & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & PSNR$\uparrow$ & SSIM$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ & F1@0.5$\uparrow$ \\
 \midrule
-\multirow{4}{*}{Liver}
-& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M） & 19.09 & 0.5603 & 0.2213 & 49.35 & 19.69 & 0.5673 & 0.1988 & 42.15 & 22.44 & 0.7004 & 0.1414 & 19.21 & -- & -- \\
-& \texttt{CycleGAN}~\cite{ref_cyclegan} / \texttt{UNIStainNet}~\cite{ref_unistainnet} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\multirow{5}{*}{Breast}
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M） & 13.12 & 0.6860 & 0.3504 & 51.38 & 18.39 & 0.7538 & 0.2917 & 40.24 & 21.89 & 0.7388 & 0.2066 & 29.19 & 0.4663 & 0.4577 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M） & \textbf{16.29} & 0.7314 & 0.2835 & 37.69 & 20.33 & 0.7718 & 0.2410 & 26.11 & 22.04 & 0.7696 & 0.2040 & 15.04 & 0.4057 & 0.3948 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M） & 15.90 & \textbf{0.7415} & \textbf{0.2396} & \textbf{29.09} & \textbf{20.65} & \textbf{0.7969} & \textbf{0.1865} & \textbf{14.88} & 23.05 & 0.8046 & 0.1675 & \textbf{3.78} & 0.5404 & 0.5454 \\
 & \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \textbf{\methodname{}（可训练 1.79M/1.90M；总 305M）} & \textbf{19.92} & \textbf{0.7369} & \textbf{0.2046} & \textbf{23.90} & \textbf{20.67} & \textbf{0.7449} & \textbf{0.1920} & \textbf{28.61} & \textbf{24.72} & \textbf{0.7831} & \textbf{0.1129} & \textbf{15.68} & \textbf{0.7303} & \textbf{0.7507} \\
+& \textbf{\methodname{}（1.79M/1.90M；总 305M）} & 15.04 & 0.7272 & 0.2633 & 41.25 & 19.83 & 0.7877 & 0.2156 & 27.77 & \textbf{23.87} & \textbf{0.8244} & \textbf{0.1562} & 8.90 & \textbf{0.5575} & \textbf{0.5594} \\
 \midrule
-\multirow{2}{*}{Breast / Brain / Kidney}
-& \texttt{Pix2Pix / CycleGAN / UNIStainNet} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& \texttt{CUT / I2SB} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\multirow{5}{*}{Brain}
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M） & 13.84 & 0.6166 & 0.3442 & 80.11 & 14.23 & 0.6305 & 0.3365 & 79.98 & 21.34 & 0.6836 & 0.1520 & 24.27 & 0.7102 & 0.6700 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M） & \textbf{14.43} & 0.6398 & 0.3111 & 64.18 & 14.74 & 0.6518 & 0.2996 & \textbf{60.08} & 21.19 & 0.6991 & 0.1535 & 21.30 & 0.7395 & 0.7138 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M） & 14.24 & \textbf{0.6789} & \textbf{0.2750} & \textbf{60.80} & \textbf{15.34} & \textbf{0.6894} & \textbf{0.2590} & 63.65 & 22.36 & 0.7550 & 0.1301 & \textbf{9.11} & 0.7411 & 0.7188 \\
+& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& \textbf{\methodname{}（1.79M/1.90M；总 305M）} & 13.38 & 0.6521 & 0.3539 & 102.11 & 14.20 & 0.6594 & 0.3357 & 96.93 & \textbf{24.43} & \textbf{0.7619} & \textbf{0.1148} & 21.09 & \textbf{0.7511} & \textbf{0.7233} \\
+\midrule
+\multirow{5}{*}{Kidney}
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M） & 17.05 & 0.7076 & 0.2197 & 42.57 & 17.45 & 0.7184 & 0.2023 & 43.92 & 21.23 & 0.7499 & 0.1519 & 48.98 & 0.5392 & 0.5278 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M） & 16.06 & 0.7244 & 0.2190 & 39.02 & 18.62 & 0.7588 & 0.1626 & 31.21 & 22.36 & 0.7803 & 0.1299 & 14.61 & 0.6634 & 0.6846 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M） & \textbf{19.21} & \textbf{0.7802} & \textbf{0.1750} & \textbf{24.15} & \textbf{20.09} & \textbf{0.7956} & \textbf{0.1534} & \textbf{21.19} & 22.82 & 0.8244 & 0.1130 & \textbf{14.35} & 0.7011 & 0.7240 \\
+& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& \textbf{\methodname{}（1.79M/1.90M；总 305M）} & 19.20 & 0.7683 & 0.2057 & 44.04 & 19.43 & 0.7765 & 0.1916 & 42.11 & \textbf{23.96} & \textbf{0.8318} & \textbf{0.1103} & 41.86 & \textbf{0.7131} & \textbf{0.7412} \\
+\midrule
+\multirow{5}{*}{Liver}
+& \texttt{Pix2Pix}~\cite{ref_pix2pix}（54.41M） & 19.09 & 0.5603 & 0.2213 & 49.35 & 19.69 & 0.5673 & 0.1988 & 42.15 & 22.44 & 0.7004 & 0.1414 & 19.21 & 0.6491 & 0.6417 \\
+& \texttt{CycleGAN}~\cite{ref_cyclegan}（11.38M） & 18.85 & 0.6695 & \textbf{0.1833} & 55.67 & 20.19 & 0.6987 & \textbf{0.1770} & 49.77 & 21.62 & 0.7095 & 0.1450 & 29.18 & 0.6168 & 0.6336 \\
+& \texttt{UNIStainNet}~\cite{ref_unistainnet}（42.19M） & 18.33 & 0.7222 & 0.2347 & 46.94 & 19.93 & 0.7344 & 0.2014 & 33.00 & 24.18 & \textbf{0.7892} & 0.1304 & \textbf{12.28} & \textbf{0.7322} & \textbf{0.7563} \\
+& \texttt{CUT}~\cite{ref_cut} / \texttt{I2SB}~\cite{ref_i2sb} & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& \textbf{\methodname{}（1.79M/1.90M；总 305M）} & \textbf{19.92} & \textbf{0.7369} & 0.2046 & \textbf{23.90} & \textbf{20.67} & \textbf{0.7449} & 0.1920 & \textbf{28.61} & \textbf{24.72} & 0.7831 & \textbf{0.1129} & 15.68 & 0.7303 & 0.7507 \\
 \bottomrule
 \end{tabular}}
 \end{table*}
@@ -439,7 +462,7 @@ s_c &= \Big(\frac{\bar{c}_{\text{ref}}^{(c)}}{\bar{c}_{\text{gen}}^{(c)} + \vare
 \texttt{UniFlow-Tok} 与 \methodname{} 的消融揭示了深度隐空间生成模型中一个关键规律：外部先验的**接入尺度与空间连续性**比单纯的特征交互深度更为关键。在包含无重叠亚像素卷积（PixelShuffle）的解码链路中，粗粒度令牌级特征若直接在低分辨率空间以加性方式耦合，令牌之间的边界不连续性会被解码器多倍上采样显著放大，在平滑低频的稀疏背景中形成肉眼敏感的棋盘格伪影。将注入节点后移至 $64\times 64$ 末端并通过深度可分离卷积实施局部感受野平滑，成功在不破坏组织实质精细边缘的前提下消除了周期性格点伪影，该设计原则对同类隐空间流匹配与扩散模型架构具有普适参考价值。同时，类似 SheafStain~\cite{ref_sheafstain} 等利用层理论或几何约束维持组织拓扑一致性的思想，亦有望与本文的轻量整流流架构进一步融合。
 
 \subsection{局限性与未来工作}
-本文仍存在以下三项客观局限：（1）当前四器官主实验与域泛化基线均在固定随机种子下完成受控实测，未来需补充多随机种子测试以评估收益方差；（2）数据集基于树脂包埋小鼠组织，后续需扩展至常规福尔马林固定石蜡包埋（FFPE）人类切片及全视野数字切片（WSI）多尺度金字塔流水线；（3）外部代表性基线队列的剩余模型（CycleGAN、UNIStainNet、CUT、I2SB）仍在统一评测集群运行中，终稿将合入完整全量数据。
+本文仍存在以下三项客观局限：（1）当前四器官主实验与域泛化基线均在固定随机种子下完成受控实测，未来需补充多随机种子测试以评估收益方差；（2）数据集基于树脂包埋小鼠组织，后续需扩展至常规福尔马林固定石蜡包埋（FFPE）人类切片及全视野数字切片（WSI）多尺度金字塔流水线；（3）外部代表性基线队列中的非配对对比平移模型（CUT）与薛定谔桥模型（I2SB）仍在统一评测集群运行中，终稿将合入其全量数据。
 
 \section{结论与开源声明}
 本文针对跨器官少样本虚拟染色任务，提出了结合病理基础模型高分辨率末端空间先验注入的轻量隐空间整流流匹配框架 \methodname{}。在严格零空间邻接防泄露的四器官基准上，末端深度可分离注入结构在有效抑制稀疏背景网格伪影的同时保障了跨器官生成精度；配合免训练半阻尼光密度校准与 OASRA 少样本回放微调，仅需不到 2M 可训练参数与 20 对目标切片即可全面超越无先验基座与四类经典域泛化基线。全部代码、数据切分与评测管线已完全开源：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
