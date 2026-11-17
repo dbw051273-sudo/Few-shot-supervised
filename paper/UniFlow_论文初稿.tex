@@ -33,7 +33,7 @@
 \maketitle
 
 \begin{abstract}
-本文研究树脂包埋小鼠组织的碘化丙啶（PI）到苏木精-伊红（H\&E）跨器官虚拟染色，考察模型在训练期未见器官上的严格零样本（0-shot）外推、免训练参考校准（0-shot + halfOD）以及极少样本（$K \in \{5, 10, 20\}$）有监督适配行为。跨器官迁移同时存在组织形态落差与染色光密度分布偏移。实证表明，在严格零样本下，冻结病理基础模型先验虽可改善多折像素误差与感知距离，但在缺乏目标域风格参照时对细胞核分割精度助益有限，在脑组织上甚至导致分布距离 KID 上升；引入 5 张无配对参考图的半阻尼光密度校准（halfOD）可迅速拉齐乳腺等高色偏器官的全局色调，但在染色相近的肝脏组织上反而轻度推高 KID；全指标的稳定改善最终仍依赖少样本有监督适配。另一方面，若在采用亚像素重排（PixelShuffle）的隐空间解码器中直接将基础模型特征叠加至低分辨率令牌层，稀疏背景极易出现周期性网格伪影。为此，本文提出隐空间整流流匹配框架 \textbf{\methodname{}}：在四倍空间压缩的噪声正则化卷积自编码器（NR-AE）隐空间内拟合确定性常微分速度场，并仅在解码末端 $64\times 64$ 分辨率处通过 $3\times 3$ 深度可分离卷积与零初始化投影注入冻结 UNI 空间特征。基于“0-shot $\to$ halfOD $\to$ 光密度锚定源域回放微调（OASRA）”三阶段协议，在四器官轮流留出且消除一维索引邻接重叠的 \texttt{UniPrior\_v2} 基准上，\methodname{} 在 20-shot 下于全部四个器官均取得高于同协议无先验基座（BaseFlow）、朴素微调（NaiveFT）及四类经典域泛化方法（MixStyle、StainAug、DANN、MLDG）的综合重建与分割结果；对比多尺度重型像素网络 UNIStainNet，\methodname{} 以 $1/22$ 的可训练参数量（$1.90\text{M}$ 对 $42.19\text{M}$）在四折 PSNR（均值 $+1.15\text{ dB}$）与 LPIPS 上占优。代码、划分清单与评测管线已开源：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
+本文研究树脂包埋小鼠组织的碘化丙啶（PI）到苏木精-伊红（H\&E）跨器官虚拟染色，考察模型在训练期未见器官上的严格零样本（0-shot）外推、免训练参考校准（0-shot + halfOD）以及极少样本（$K \in \{5, 10, 20\}$）有监督适配行为。跨器官迁移同时存在组织形态落差与染色光密度分布偏移。实证表明，在严格零样本下，冻结病理基础模型先验虽可改善多折像素误差与感知距离，但在缺乏目标域风格参照时对细胞核分割精度助益有限，在脑组织上甚至导致分布距离 KID 上升；引入 5 张无配对参考图的半阻尼光密度校准（halfOD）可迅速拉齐乳腺等高色偏器官的全局色调，但在染色相近的肝脏组织上反而轻度推高 KID；全指标的稳定改善最终仍依赖少样本有监督适配。另一方面，若在采用亚像素重排（PixelShuffle）的隐空间解码器中直接将基础模型特征叠加至低分辨率令牌层，稀疏背景极易出现周期性网格伪影。为此，本文提出隐空间整流流匹配框架 \textbf{\methodname{}}：在四倍空间压缩卷积自编码器（NR-AE，训练期采用常规隐空间高斯微扰稳定解码器）隐空间内拟合确定性常微分速度场，并仅在解码末端 $64\times 64$ 分辨率处通过 $3\times 3$ 深度可分离卷积与零初始化投影注入冻结 UNI 空间特征。基于“0-shot $\to$ halfOD $\to$ 光密度锚定源域回放微调（OASRA）”三阶段协议，在四器官轮流留出且消除一维索引邻接重叠的 \texttt{UniPrior\_v2} 基准上，\methodname{} 在 20-shot 下于全部四个器官均取得高于同协议无先验基座（BaseFlow）、朴素微调（NaiveFT）及四类经典域泛化方法（MixStyle、StainAug、DANN、MLDG）的综合重建与分割结果；对比多尺度重型像素网络 UNIStainNet，\methodname{} 以 $1/22$ 的可训练参数量（$1.90\text{M}$ 对 $42.19\text{M}$）在四折 PSNR（均值 $+1.15\text{ dB}$）与 LPIPS 上占优。代码、划分清单与评测管线已开源：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -361,13 +361,62 @@ Liver & 19.92 & 20.47 & \textbf{20.67} & 20.52 & 20.10 \\
 & 0-shot + halfOD & \textbf{20.57} & 0.7848 & \textbf{0.2018} & \textbf{22.11} & \textbf{0.5299} & 4.32 & 5.89\% & 5.32\% \\
 & OASRA (20-shot) & \textbf{24.11} & \textbf{0.8249} & \textbf{0.1520} & \textbf{8.89} & \textbf{0.5657} & 2.70 & 5.90\% & 4.34\% \\
 \midrule
+\multirow{2}{*}{\texttt{UniFlow (w/o dwconv)}}
+& 0-shot & 14.98 & 0.7247 & 0.2640 & 42.81 & 0.5109 & 4.07 & 5.39\% & 4.14\% \\
+& OASRA (20-shot) & 24.06 & 0.8256 & 0.1544 & 8.23 & 0.5611 & 1.87 & \textbf{4.73\%} & \textbf{3.28\%} \\
+\midrule
 \multirow{6}{*}{\textbf{\methodname{}}}
 & 0-shot & 15.04 & 0.7272 & 0.2633 & 41.25 & 0.5028 & 4.62 & \textbf{5.15\%} & \textbf{4.03\%} \\
 & 0-shot + halfOD & 19.83 & \textbf{0.7877} & 0.2156 & 27.77 & 0.5027 & 4.33 & \textbf{5.46\%} & \textbf{4.60\%} \\
 & OASRA (5-shot) & 21.34 & 0.7916 & 0.1918 & 26.26 & 0.5523 & 2.19 & 6.87\% & 5.07\% \\
 & OASRA (10-shot) & 22.95 & 0.8125 & 0.1681 & 13.00 & 0.5526 & 2.06 & 5.29\% & 3.69\% \\
 & NaiveFT (20-shot) & 23.62 & 0.8170 & 0.1645 & 11.03 & 0.5571 & 2.00 & 6.07\% & 3.99\% \\
-& \textbf{OASRA (20-shot)} & 23.87 & 0.8244 & 0.1562 & 8.90 & 0.5575 & 1.80 & \textbf{4.95\%} & \textbf{3.51\%} \\
+& \textbf{OASRA (20-shot)} & 23.87 & 0.8244 & 0.1562 & 8.90 & 0.5575 & 1.80 & 4.95\% & 3.51\% \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\caption{整流流欧拉采样步数 $S \in \{1, 2, 4, 8, 16\}$ 对 \methodname{}（Breast 0-shot / 20-shot）的精度-速度权衡}\label{tab:steps_ablation}
+\footnotesize\setlength{\tabcolsep}{3.0pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{cc|ccc|cccc}
+\toprule
+\multirow{2}{*}{步数 $S$} & 时延 & \multicolumn{3}{c|}{0-shot} & \multicolumn{4}{c}{OASRA 20-shot} \\
+& ($\text{ms/img}$) & PSNR$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ \\
+\midrule
+1 & \textbf{20.04} & \textbf{15.33} & 0.2752 & 45.20 & 23.71 & 0.1659 & 12.79 & 0.5439 \\
+2 & 26.06 & 15.12 & 0.2647 & 41.25 & 23.86 & 0.1581 & 9.53 & 0.5531 \\
+\textbf{4（默认）} & 35.12 & 15.06 & 0.2609 & \textbf{40.63} & \textbf{23.87} & 0.1562 & \textbf{8.62} & \textbf{0.5564} \\
+8 & 44.96 & 15.06 & \textbf{0.2594} & 40.72 & 23.79 & \textbf{0.1561} & 8.79 & 0.5522 \\
+16 & 73.26 & 15.01 & 0.2605 & 41.11 & 23.72 & 0.1566 & 8.86 & 0.5508 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\caption{OASRA 内部组件逐项拆解与多种子统计稳定性（Breast 目标测试 $N=120$ 与源域验证 $N=240$）}\label{tab:oasra_components}
+\footnotesize\setlength{\tabcolsep}{2.8pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{l|cccc|ccc}
+\toprule
+\multirow{2}{*}{微调策略 / 组件消融} & \multicolumn{4}{c|}{Breast 目标测试集 ($N=120$)} & \multicolumn{3}{c}{源域验证集 ($N=240$)} \\
+& PSNR$\uparrow$ & LPIPS$\downarrow$ & KID$\downarrow$ & Dice$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & Dice$\uparrow$ \\
+\midrule
+Pretrain（微调前 0-shot） & 15.04 & 0.2633 & 41.25 & 0.5028 & \textbf{24.51} & \textbf{0.1361} & \textbf{0.7237} \\
+\midrule
+NaiveFT（全关闭） & 23.62 & 0.1645 & 11.03 & 0.5571 & 16.28 & 0.2560 & 0.6717 \\
+NaiveFT + SWA + Jitter & 24.08 & \textbf{0.1559} & 8.91 & \textbf{0.5675} & 15.73 & 0.2574 & 0.6872 \\
+OASRA w/o $\mathcal{L}_{\text{OD}}$ & 23.86 & 0.1562 & \textbf{8.78} & 0.5553 & 19.76 & 0.1847 & 0.7234 \\
+OASRA w/o Source Replay & \textbf{24.10} & 0.1560 & 8.82 & 0.5672 & 15.69 & 0.2593 & 0.6869 \\
+\textbf{完整 OASRA（默认）} & 23.87 & 0.1562 & 8.90 & 0.5575 & 19.67 & 0.1858 & 0.7231 \\
+\midrule
+\multicolumn{8}{l}{\textit{3-Seed 随机种子稳定性均值$\pm$标准差（Seeds 7202, 8202, 9202；Breast 20-shot）}} \\
+\texttt{BaseFlow} (3 seeds) & $23.05\pm 0.03$ & $0.1728\pm 0.0004$ & $10.77\pm 0.13$ & $0.5489\pm 0.0025$ & -- & -- & -- \\
+\texttt{NaiveFT} (3 seeds) & $23.63\pm 0.02$ & $0.1634\pm 0.0010$ & $11.46\pm 0.80$ & $0.5569\pm 0.0004$ & -- & -- & -- \\
+\textbf{\methodname{} OASRA} (3 seeds) & $\mathbf{23.86\pm 0.01}$ & $\mathbf{0.1563\pm 0.0001}$ & $\mathbf{8.76\pm 0.12}$ & $0.5562\pm 0.0014$ & -- & -- & -- \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -387,10 +436,9 @@ Liver & 19.92 & 20.47 & \textbf{20.67} & 20.52 & 20.10 \\
 \end{figure*}
 
 \begin{enumerate}
-    \item \textbf{空间-频域双维验证：末端注入真正压平周期性网格能量}：表~\ref{tab:breast_ablation} 显示，在 20-shot 下 \texttt{UniFlow-Tok} 虽在重建像素与分割指标上略高（PSNR $24.11$ 对 $23.87\text{ dB}$，Dice $0.5657$ 对 $0.5575$），但在视觉上伴随明显棋盘格伪影（图~\ref{fig:breast_zoom} 第 7 列，\texttt{bg\_lap=2.70}）。更关键的是，全测试集 227 个自动检出稀疏背景块的 2D FFT 频谱统计揭穿了单纯 \texttt{bg\_lap} 的局限：\texttt{BaseFlow (20-shot)} 虽因背景过度平滑使空间拉普拉斯低至 $1.64$，但其在频域中的 $16\text{px}$ 网格能量占比依然高达 $6.08\%$（\texttt{UniFlow-Tok} 为 $5.90\%$）；唯有本文 \methodname{} 在\textbf{0-shot（$5.15\%$ / $4.03\%$）、0-shot + halfOD（$5.46\%$ / $4.60\%$）与 20-shot（$4.95\%$ / $3.51\%$）}全部阶段均取得最低周期网格能量占比，最贴近真值频谱基线（$3.89\%$ / $2.83\%$）。
-    \item \textbf{极少样本效率阶梯}：仅用 $K=5$ 对目标切片，\methodname{} PSNR 即可从 $15.04$ 跳升至 $21.34\text{ dB}$（$+6.30\text{ dB}$），核分割 Dice 升至 $0.5523$（超过 5 张无配对参考 halfOD 的 $19.83\text{ dB} / 0.5027$）；随着 $K$ 增至 $10$ 与 $20$，各指标延续稳定边际收敛。
-    \item \textbf{OASRA 策略统计检验与源域抗遗忘实证}：在 20-shot 乳腺目标域上，取消光密度锚定与回放的 \texttt{NaiveFT} 导致 PSNR 由 $23.87$ 降至 $23.62\text{ dB}$（$p=1.50\times 10^{-5}$）、SSIM 由 $0.8244$ 降至 $0.8170$（$p=1.80\times 10^{-13}$）、LPIPS 由 $0.1562$ 恶化至 $0.1645$（$p=1.30\times 10^{-10}$），同时频域网格能量回升至 $6.07\%$。为进一步验证源域保持能力，我们将微调后的两个 20-shot 模型回测至其 240 对源域验证集（Brain、Kidney、Liver 各 80 对）：预训练模型在源域基线为 PSNR $24.51\text{ dB}$ / SSIM $0.7929$ / LPIPS $0.1361$ / 核分割 Dice $0.7237$ / F1@0.5 $0.7353$；\texttt{NaiveFT} 在源域发生实质性形态灾难性遗忘（PSNR 骤降 $-8.23\text{ dB}$ 至 $16.28\text{ dB}$、LPIPS 恶化至 $0.2560$、Dice 跌至 $0.6717$、F1@0.5 跌至 $0.6804$）；而 \texttt{OASRA} 不仅将 PSNR 维持在 $19.67\text{ dB}$（高出 \texttt{NaiveFT} $+3.39\text{ dB}$）、SSIM 保持 $0.7570$、LPIPS $0.1858$，且\textbf{源域核分割 Dice 几乎无损保持在 $0.7231$（F1@0.5 达 $0.7341$）}。这直接证明 \texttt{OASRA} 在源域 PSNR 上的温和变化主要源自回放期间 50\% 染色风格向乳腺偏移，其微观细胞核拓扑记忆得到完好保留。
-    % TODO [需作者核实/补数]: 20-shot 乳腺结果与 OASRA/NaiveFT 对照目前基于单一种子实测（已补充 N=120 Wilcoxon 检验、N=240 源域 PSNR/SSIM/LPIPS/Cellpose Dice/F1 抗遗忘实测），建议终稿补充 3 组随机种子均值±标准差及 OASRA 组件逐项消融（如 +OD / +Replay / +SWA）。
+    \item \textbf{注入位置与深度卷积拆解（空间-频域双维验证）}：表~\ref{tab:breast_ablation} 显示，在 20-shot 下 \texttt{UniFlow-Tok} 虽在重建像素与分割指标上略高（PSNR $24.11$ 对 $23.87\text{ dB}$，Dice $0.5657$ 对 $0.5575$），但在视觉上伴随明显棋盘格伪影（图~\ref{fig:breast_zoom} 第 7 列，\texttt{bg\_lap=2.70}）。全测试集 227 个稀疏背景块的 2D FFT 频谱度量进一步证明：\texttt{BaseFlow (20-shot)} 虽因过度平滑使空间拉普拉斯低至 $1.64$，但其频域 $16\text{px}$ 周期能量占比仍高达 $6.08\%$（\texttt{UniFlow-Tok} 为 $5.90\%$）。值得指出，去除末端 $3\times 3$ 深度可分离平滑卷积的 \texttt{UniFlow (w/o dwconv)} 同样可在 20-shot 下压低网格能量（$4.73\%$，PSNR $24.06\text{ dB}$），但在 0-shot 阶段完整 \methodname{}（含 $\mathcal{K}_{\text{dw}}$）取得了更低的网格能量（$5.15\%$ 对 $5.39\%$）与更优 KID（$41.25$ 对 $42.81$）。这一解耦验证证实：\textbf{将先验注入移出 $16\times 16$ 令牌层、置于高分辨率 $64\times 64$ 末端是消除块洗牌周期伪影的主因}，而 $3\times 3$ 深度卷积在未适配 0-shot 阶段提供辅助空间平滑。
+    \item \textbf{极少样本效率与欧拉步数 $S$ 权衡}：仅用 $K=5$ 对目标切片，\methodname{} PSNR 即可从 $15.04$ 升至 $21.34\text{ dB}$（$+6.30\text{ dB}$），核分割 Dice 升至 $0.5523$。表~\ref{tab:steps_ablation} 进一步对推理步数 $S \in \{1, 2, 4, 8, 16\}$ 作零重训扫描：随着 $S$ 从 $1$ 增至 $4$，20-shot PSNR 由 $23.71$ 稳步升至峰值 $23.87\text{ dB}$、KID 由 $12.79$ 降至最低 $8.62$、Dice 升至峰值 $0.5564$；继续增大步数（$S=8, 16$）反因微弱数值积分漂移出现轻度回落（$23.79 / 23.72\text{ dB}$）且时延倍增至 $73.26\text{ ms/img}$，证实默认 $S=4$ 处于精确的精度-速度帕累托拐点。
+    \item \textbf{OASRA 组件逐项消融、源域抗遗忘与 3-Seed 稳定性}：表~\ref{tab:oasra_components} 彻底剥离了 \texttt{OASRA} 的四项内部机制。（1）仅开启 SWA 与 PI 抖动（\texttt{NaiveFT + SWA + Jitter}）或关闭回放（\texttt{OASRA w/o Source Replay}）虽可使单一乳腺目标域达到 $24.08$--$24.10\text{ dB}$，但源域 240 对验证集出现严重灾难性遗忘（PSNR 跌至 $15.69$--$15.73\text{ dB}$，核分割 Dice 跌至 $0.6869$--$0.6872$）；（2）引入源域回放（\texttt{OASRA w/o $\mathcal{L}_{\text{OD}}$} 与完整 \texttt{OASRA}）将源域 PSNR 挽回 $+4.0\text{ dB}$ 至 $19.67$--$19.76\text{ dB}$，并将\textbf{源域核分割 Dice 几乎无损保持在 $0.7231$--$0.7234$（对比微调前 $0.7237$）}，直接证实防遗忘归因于源域回放而非 SWA；（3）叠加光密度锚定 $\mathcal{L}_{\text{OD}}$ 相比 \texttt{w/o $\mathcal{L}_{\text{OD}}$} 微幅稳住了目标域 Dice（$0.5575$ 对 $0.5553$）与 PSNR（$23.87$ 对 $23.86\text{ dB}$）。此外，在 Breast 20-shot 上独立运行 3 个随机种子（7202, 8202, 9202）表明，\methodname{} 的多轮均值$\pm$标准差（$23.86\pm 0.01\text{ dB}$ PSNR、$8.76\pm 0.12$ KID）以极小方差稳定优于 \texttt{NaiveFT}（$23.63\pm 0.02\text{ dB}$、$11.46\pm 0.80$）与 \texttt{BaseFlow}（$23.05\pm 0.03\text{ dB}$、$10.77\pm 0.13$）。
 \end{enumerate}
 
 \subsection{与外部代表性生成基线的跨范式对比}\label{sec:external}
@@ -451,7 +499,7 @@ Liver & 19.92 & 20.47 & \textbf{20.67} & 20.52 & 20.10 \\
 \texttt{UniFlow-Tok} 与 \methodname{} 的对照及全测试集 2D FFT 频谱度量提示：在基于亚像素重排（PixelShuffle）的隐空间流匹配网络中，外部空间先验的\textbf{接入尺度}直接决定了稀疏背景的频域洁净度。低分辨率令牌层的加性耦合经多层重排被放大成规则网格谐波；将其后移至 $64\times 64$ 速度场末端并用深度可分离卷积局部平滑，可从源头打断周期性误差累积。今后亦可探索引入如 SheafStain~\cite{ref_sheafstain} 所提层理论等空间拓扑正则，在抑制网格的同时进一步丰富深层时空交互。
 
 \subsection{局限性}
-本文工作尚有以下边界：（1）四器官主实验与 DG 基线当前基于固定种子开展，需进一步补充多随机种子误差棒估计；（2）数据来源于树脂包埋小鼠器官并按一维切片索引间隔（$|i_{\text{val}} - i_{\text{test}}| > 1$）切分，未来工作需在严格跨动物个体/跨整片（slide-disjoint）协议下评估向人类 FFPE 临床切片的外推能力；（3）外部队列中的 \texttt{CUT} 与 \texttt{I2SB} 定量生成指标仍在基准集群运行中，待完成后将补全对应实测行。
+本文工作尚有以下边界：（1）目前已在留出 \texttt{Breast} 折补全 3-seed 统计均值与标准差（证实方差 $<0.03\text{ dB}$），其余三折的全量多种子重复仍可进一步补全；（2）数据来源于树脂包埋小鼠器官并按一维切片索引间隔（$|i_{\text{val}} - i_{\text{test}}| > 1$）切分，未来工作需在严格跨动物个体/跨整片（slide-disjoint）协议下评估向人类 FFPE 临床切片的外推能力；（3）外部队列中的 \texttt{CUT} 与 \texttt{I2SB} 定量生成指标仍在基准集群运行中，待完成后将补全对应实测行。
 
 \section{结论}
 本文提出了融合病理基础模型高分辨率末端空间先验注入的轻量隐空间整流流匹配框架 \methodname{}。在严格消除一维切片邻接的四器官留出基准上，仅在 $64\times 64$ 速度场末端注入深度可分离平滑特征即可在频域显著压低稀疏背景周期性网格伪影；结合半阻尼光密度校准与 OASRA 少样本回放适配，仅需 $1.90\text{M}$ 可训练参数与 20 对目标样本即可全面优于无先验基座、四类经典 DG 基线及传统像素 GAN 方法，并在四折重建像素保真与三折核分割上超越重型 SPADE-UNet 模型 \texttt{UNIStainNet}。全部开源资料见：\url{https://github.com/dbw051273-sudo/Few-shot-supervised}。
