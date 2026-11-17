@@ -80,10 +80,10 @@ Few-shot-supervised/
 ├── eval_cache/                        # 零邻接 LOMO 切分清单 (round1_splits.json, breast_symmetric_splits.json)
 ├── scripts/                           # 核心模型、损失、数据、统一评测与基线脚本
 │   ├── round1_models.py               # Codec + ModularUniFlow + SwadAccumulator
-│   ├── round1_losses_and_data.py      # 4-fold LOMO 切分、RAE 预训练、Flow 训练与 M6 适配
+│   ├── round1_losses_and_data.py      # 4-fold LOMO 切分、RAE 预训练、Flow 训练与 SRA 适配
 │   ├── uni_encoder.py                 # 冻结 UNI (ViT-L/16) 特征提取接口
 │   ├── v2_unified_eval.py             # PSNR/SSIM/LPIPS/KID/Cellpose/bg_lap 统一评测管线
-│   ├── run_round1_pipeline.py         # Round-1 序列化全量运行器
+│   ├── run_round1_pipeline.py         # Round-1 序列化全量运行器 (默认 --od-weight 0.0)
 │   ├── run_dg_baselines.py            # MixStyle / StainAug / DANN / MLDG 运行器
 │   ├── run_queue2_baselines.py        # Queue-2 官方外部基线运行器
 │   └── run_queue3_baselines.py        # Queue-3 官方 CUT + I2SB 运行器
@@ -93,8 +93,9 @@ Few-shot-supervised/
 │   ├── CUT/
 │   └── I2SB/
 ├── results/                           # 完整实测指标 (JSON/CSV/MD)、逐图评估表与定性拼接图
-│   ├── round1/
-│   └── dg_baselines/
+│   ├── round1/                        # 奥卡姆精简后主实验定稿结果 (UniFlow + SRA)
+│   ├── dg_baselines/                  # 四类经典 DG 基线完整结果
+│   └── archive_exploratory_dwconv_od/ # 早期探索性模块归档 (3x3 DWConv 与显式 L_OD / OASRA)
 └── paper/                             # 论文 LaTeX 源码、编译版 PDF、Nature-style 矢量图与绘图脚本
     ├── UniFlow_论文初稿.tex
     ├── UniFlow_论文初稿.pdf
