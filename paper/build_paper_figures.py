@@ -130,15 +130,15 @@ def build_fig1_arch() -> None:
 
     # Panel headers (Nature lowercase bold)
     ax.text(1.8, 57.5, "a", fontsize=8.5, fontweight="bold", color="#000000", va="top")
-    ax.text(3.8, 57.5, "UniFlow latent rectified-flow architecture & high-resolution UNI injection (u1_up64_only vs 1x1)", fontsize=7.0, fontweight="bold", color="#1A202C", va="top")
+    ax.text(3.8, 57.5, "UniFlow latent rectified-flow architecture & terminal UNI injection (UniFlow vs UniFlow-Tok)", fontsize=7.0, fontweight="bold", color="#1A202C", va="top")
     ax.text(1.8, 23.2, "b", fontsize=8.5, fontweight="bold", color="#000000", va="top")
-    ax.text(3.8, 23.2, "Source-domain RAE codec & rectified-flow pretraining (LOMO source organs, SWAD)", fontsize=7.0, fontweight="bold", color="#1A202C", va="top")
+    ax.text(3.8, 23.2, "Source-domain NR-AE codec & rectified-flow pretraining (LOMO source organs, SWA)", fontsize=7.0, fontweight="bold", color="#1A202C", va="top")
     ax.text(1.8, 10.6, "c", fontsize=8.5, fontweight="bold", color="#000000", va="top")
-    ax.text(3.8, 10.6, "Three-stage cross-organ deployment: 0-shot -> halfOD calibration -> M6 K-shot adaptation", fontsize=7.0, fontweight="bold", color="#1A202C", va="top")
+    ax.text(3.8, 10.6, "Three-stage cross-organ deployment: 0-shot -> halfOD calibration -> OASRA K-shot adaptation", fontsize=7.0, fontweight="bold", color="#1A202C", va="top")
 
     # --- Panel a: Main Architecture ---
     box(2.0, 42.5, 12.2, 7.4, "Input PI x", "256x256x3", ec=c_slate, fc=c_gray_bg)
-    box(16.5, 46.8, 15.2, 6.2, "RAE Encoder E_psi", "4x -> 64x64x12 (z0)", ec=c_blue, fc=c_blue_bg)
+    box(16.5, 46.8, 15.2, 6.2, "NR-AE Encoder E_psi", "4x -> 64x64x12 (z0)", ec=c_blue, fc=c_blue_bg)
     box(16.5, 38.0, 15.2, 6.2, "State z_t + Cond z_0", "Patch 4x4 (256 tok)", ec=c_blue, fc=c_blue_bg)
     box(34.2, 40.5, 20.8, 11.4, "4-Block Transformer v_theta", "Blocks B0..B3 (d=192)\nRole + Pos + Time emb", ec=c_blue, fc=c_blue_bg)
     box(57.5, 44.5, 14.2, 7.4, "PixelShuffle(4) Head", "16x16 -> 64x64x12\nBase velocity v_base", ec=c_blue, fc=c_blue_bg)
@@ -147,8 +147,8 @@ def build_fig1_arch() -> None:
 
     # UNI stream at bottom of panel a
     box(16.5, 27.2, 22.0, 7.6, "Frozen UNI (ViT-L/16)", "224x224 -> 14x14x1024 grid\nComputed 1x, cached", ec=c_teal, fc=c_teal_bg)
-    box(41.5, 27.0, 31.5, 8.2, "up64_only High-Res Residual (Ours)", "1x1 (1024->96) + Bilinear(64) + 3x3 DWConv\n+ SiLU + Zero-Init 1x1 (96->12)", ec=c_teal, fc=c_teal_bg, lw=1.1)
-    box(75.5, 27.2, 22.8, 7.6, "Ablation: 1x1 Injection", "Added before B2/B3 (16x16)\n4x4 grid risk (bg_lap^)", ec="#718096", fc=c_gray_bg, lw=0.7)
+    box(41.5, 27.0, 31.5, 8.2, "UniFlow Terminal Prior Branch", "1x1 (1024->96) + Bilinear(64) + 3x3 DWConv\n+ SiLU + Zero-Init 1x1 (96->12)", ec=c_teal, fc=c_teal_bg, lw=1.1)
+    box(75.5, 27.2, 22.8, 7.6, "Ablation: UniFlow-Tok", "Added before B2/B3 (16x16)\nPeriodic grid artifact risk", ec="#718096", fc=c_gray_bg, lw=0.7)
 
     arrow(14.2, 46.5, 16.5, 49.6)
     arrow(24.1, 46.8, 24.1, 44.2)
@@ -160,21 +160,21 @@ def build_fig1_arch() -> None:
     arrow(38.5, 31.0, 41.5, 31.0, color=c_teal)
     arrow(73.0, 31.4, 79.0, 44.5, color=c_teal, lw=1.1)
     arrow(38.5, 33.8, 42.5, 40.5, color="#718096", ls="--", lw=0.7)
-    ax.text(42.5, 37.8, "1x1 branch\n(ablated)", fontsize=4.8, color="#718096")
+    ax.text(42.5, 37.8, "Tok branch\n(ablated)", fontsize=4.8, color="#718096")
 
     # --- Panel b: Pretraining ---
     box(2.0, 14.2, 16.5, 6.0, "Source Organ Pairs", "3 organs x 480 pairs\n(strict LOMO split)", ec=c_slate, fc=c_gray_bg, fs=5.4)
-    box(21.2, 14.2, 18.8, 6.0, "Stage 1: Codec Pretrain", "Noise in [0, 0.08*std]\nL1 + 0.15*Grad + Lat L2", ec=c_blue, fc=c_blue_bg, fs=5.4)
+    box(21.2, 14.2, 18.8, 6.0, "Stage 1: NR-AE Pretrain", "Noise in [0, 0.08*std]\nL1 + 0.15*Grad + Lat L2", ec=c_blue, fc=c_blue_bg, fs=5.4)
     box(42.7, 14.2, 25.0, 6.0, "Stage 2: Flow Pretrain", "z_t = (1-t)z_0 + t z_1\nMSE(v_theta, z_1-z_0), 9.6k", ec=c_blue, fc=c_blue_bg, fs=5.4)
-    box(70.4, 14.2, 27.8, 6.0, "SWAD & Source-Val Select", "240 source-val pairs\nAvg weights over [0.5T, T]", ec=c_teal, fc=c_teal_bg, fs=5.4)
+    box(70.4, 14.2, 27.8, 6.0, "SWA & Source-Val Select", "240 source-val pairs\nAvg weights over [0.5T, T]", ec=c_teal, fc=c_teal_bg, fs=5.4)
     arrow(18.5, 17.1, 21.2, 17.1)
     arrow(40.0, 17.1, 42.7, 17.1)
     arrow(67.7, 17.1, 70.4, 17.1)
 
     # --- Panel c: Deployment & Adaptation ---
-    box(2.0, 2.0, 21.5, 6.0, "Stage I: Strict 0-shot", "4-step Euler (cached UNI)\nTarget unseen (1.79M)", ec=c_blue, fc=c_blue_bg, fs=5.4)
-    box(26.2, 2.0, 25.2, 6.0, "Stage II: 0-shot + halfOD", "5 unpaired refs (refs_5)\nRuifrok Beer-Lambert^0.5", ec=c_teal, fc=c_teal_bg, fs=5.4)
-    box(54.1, 2.0, 44.1, 6.0, "Stage III: M6 K-shot Adaptation (K = 5, 10, 20)", "4*L1 + 2*Grad + 0.5*LPIPS + 0.25*OD + 0.4*Replay\nFlow 2e-4, Codec Dec 2e-5 (1.90M) + SWAD", ec=c_orange, fc=c_orange_bg, lw=1.0, fs=5.4)
+    box(2.0, 2.0, 21.5, 6.0, "Stage I: Strict 0-shot", "4-step Euler (cached UNI)\nTrainable 1.79M", ec=c_blue, fc=c_blue_bg, fs=5.4)
+    box(26.2, 2.0, 25.2, 6.0, "Stage II: 0-shot + halfOD", "5 unpaired refs (alpha=0.5)\n0.5*0-shot + 0.5*fullOD", ec=c_teal, fc=c_teal_bg, fs=5.4)
+    box(54.1, 2.0, 44.1, 6.0, "Stage III: OASRA K-shot Adaptation (K = 5, 10, 20)", "4*L1 + 2*Grad + 0.5*LPIPS + 0.25*OD + 0.4*Replay\nFlow 2e-4, Codec Dec 2e-5 (1.90M, 1.5k) + SWA", ec=c_orange, fc=c_orange_bg, lw=1.0, fs=5.4)
     arrow(23.5, 5.0, 26.2, 5.0)
     arrow(51.4, 5.0, 54.1, 5.0, color=c_orange)
 
@@ -190,9 +190,9 @@ def build_fig2_lomo_4organs(splits: dict) -> None:
     organ_labels = ["Breast\n(Held-out)", "Brain\n(Held-out)", "Kidney\n(Held-out)", "Liver\n(Held-out)"]
     cols = [
         ("PI Input", lambda o, n: DATA_DIR / o / "test" / "input" / n),
-        ("Base\n(0-shot)", lambda o, n: R1_DIR / "generated" / o / f"{o}__u0_base_d192__0shot" / n),
+        ("BaseFlow\n(0-shot)", lambda o, n: R1_DIR / "generated" / o / f"{o}__u0_base_d192__0shot" / n),
         ("UniFlow\n(0-shot)", lambda o, n: R1_DIR / "generated" / o / f"{o}__u1_up64_only_d192__0shot" / n),
-        ("Base\n(20-shot)", lambda o, n: R1_DIR / "generated" / o / f"{o}__u0_base_d192__m6_k20" / n),
+        ("BaseFlow\n(20-shot)", lambda o, n: R1_DIR / "generated" / o / f"{o}__u0_base_d192__m6_k20" / n),
         ("MixStyle\n(20-shot)", lambda o, n: DG_DIR / "generated" / o / f"{o}__mixstyle_d192__m6_k20" / n),
         ("DANN\n(20-shot)", lambda o, n: DG_DIR / "generated" / o / f"{o}__dann_d192__m6_k20" / n),
         ("UniFlow\n(20-shot)", lambda o, n: R1_DIR / "generated" / o / f"{o}__u1_up64_only_d192__m6_k20" / n),
@@ -236,9 +236,9 @@ def build_fig3_breast_ablation_zoom() -> None:
         ("UniFlow\n5-shot", R1_DIR / "generated" / "Breast" / "Breast__u1_up64_only_d192__m6_k5" / nm, "bg_lap=2.19"),
         ("UniFlow\n10-shot", R1_DIR / "generated" / "Breast" / "Breast__u1_up64_only_d192__m6_k10" / nm, "bg_lap=2.06"),
         ("NaiveFT\n20-shot", R1_DIR / "generated" / "Breast" / "Breast__u1_up64_only_d192__naive_ft_k20" / nm, "bg_lap=2.00"),
-        ("u1_1x1\n20-shot", R1_DIR / "generated" / "Breast" / "Breast__u1_uni2d_1x1_d192__m6_k20" / nm, "bg_lap=2.70"),
+        ("UniFlow-Tok\n20-shot", R1_DIR / "generated" / "Breast" / "Breast__u1_uni2d_1x1_d192__m6_k20" / nm, "bg_lap=2.70"),
         ("UniFlow\n20-shot", R1_DIR / "generated" / "Breast" / "Breast__u1_up64_only_d192__m6_k20" / nm, "bg_lap=1.80"),
-        ("Reference\nH&E", DATA_DIR / "Breast" / "test" / "target" / nm, "gt_lap=2.86"),
+        ("Reference\nH&E", DATA_DIR / "Breast" / "test" / "target" / nm, "bg_lap=2.86"),
     ]
 
     fig, axes = plt.subplots(2, len(cols), figsize=p.figsize)
@@ -302,9 +302,9 @@ def build_fig4_quantitative_charts() -> None:
     ax = axes[0]
     x = np.arange(len(organs))
     w = 0.25
-    ax.bar(x - w / 2, base_psnr_0, w, color="#CBD5E0", label="Base 0-shot")
+    ax.bar(x - w / 2, base_psnr_0, w, color="#CBD5E0", label="BaseFlow 0-shot")
     ax.bar(x + w / 2, ours_psnr_0, w, color="#91D1C2", label="UniFlow 0-shot")
-    ax.plot(x, base_psnr_20, "o--", color=c_blue, ms=3.5, lw=1.0, label="Base 20-shot")
+    ax.plot(x, base_psnr_20, "o--", color=c_blue, ms=3.5, lw=1.0, label="BaseFlow 20-shot")
     ax.plot(x, ours_psnr_20, "s-", color=c_ours, ms=3.8, lw=1.2, label="UniFlow 20-shot")
     ax.set_xticks(x)
     ax.set_xticklabels(organs, fontsize=6.0)
@@ -324,7 +324,7 @@ def build_fig4_quantitative_charts() -> None:
     w2 = 0.19
     ax.bar(x - 1.5 * w2, dann_kid, w2, color=c_red, alpha=0.85, label="DANN")
     ax.bar(x - 0.5 * w2, mix_kid, w2, color=c_cyan, alpha=0.9, label="MixStyle")
-    ax.bar(x + 0.5 * w2, base_kid, w2, color=c_blue, alpha=0.85, label="Base")
+    ax.bar(x + 0.5 * w2, base_kid, w2, color=c_blue, alpha=0.85, label="BaseFlow")
     ax.bar(x + 1.5 * w2, ours_kid, w2, color=c_ours, label="UniFlow")
     ax.set_xticks(x)
     ax.set_xticklabels(organs, fontsize=6.0)
@@ -343,7 +343,7 @@ def build_fig4_quantitative_charts() -> None:
     l1 = ax.plot(shots, k_psnr, "s-", color=c_ours, lw=1.3, ms=4.0, label="UniFlow PSNR")
     ax.scatter([0], [19.83], marker="^", s=26, color=c_cyan, zorder=5, label="halfOD (19.83)")
     ax.scatter([20], [23.62], marker="D", s=22, color=c_blue, zorder=5, label="NaiveFT (23.62)")
-    ax.axhline(23.04, ls="--", lw=0.8, color=c_base, label="Base 20-shot (23.04)")
+    ax.axhline(23.04, ls="--", lw=0.8, color=c_base, label="BaseFlow 20-shot (23.04)")
     ax.set_xticks(shots)
     ax.set_xlabel("Target adaptation shots (K)")
     ax.set_ylabel("Breast PSNR (dB)")
@@ -356,19 +356,19 @@ def build_fig4_quantitative_charts() -> None:
     # Panel d: Breast 20-shot PSNR vs sparse background Laplacian (bg_lap)
     ax = axes[3]
     pts = [
-        ("Base", 1.64, 23.04, c_blue, "o"),
+        ("BaseFlow", 1.64, 23.04, c_blue, "o"),
         ("MixStyle", 1.74, 22.90, c_cyan, "o"),
         ("StainAug", 1.71, 23.13, "#4DBBD5", "^"),
         ("MLDG", 1.75, 23.11, "#8491B4", "v"),
         ("DANN", 1.75, 22.43, c_red, "x"),
         ("NaiveFT", 2.00, 23.62, "#F39B7F", "D"),
-        ("u1_1x1", 2.70, 24.11, c_red, "P"),
+        ("UniFlow-Tok", 2.70, 24.11, c_red, "P"),
         ("UniFlow", 1.80, 23.87, c_ours, "s"),
     ]
     for lbl, lx, py, col, mk in pts:
         ax.scatter([lx], [py], color=col, marker=mk, s=28 if lbl != "UniFlow" else 36, zorder=5)
         dx, dy = 0.03, 0.04
-        if lbl == "Base":
+        if lbl == "BaseFlow":
             dx, dy = -0.05, -0.15
         elif lbl == "StainAug":
             dx, dy = 0.04, 0.07
@@ -376,11 +376,11 @@ def build_fig4_quantitative_charts() -> None:
             dy = -0.15
         elif lbl == "MLDG":
             dx, dy = 0.04, -0.04
-        elif lbl == "u1_1x1":
-            dx, dy = -0.35, -0.15
+        elif lbl == "UniFlow-Tok":
+            dx, dy = -0.60, -0.15
         elif lbl == "UniFlow":
             dx, dy = 0.04, 0.06
-        ax.text(lx + dx, py + dy, lbl, fontsize=5.1, fontweight="bold" if lbl in ("UniFlow", "u1_1x1") else "normal", color=col)
+        ax.text(lx + dx, py + dy, lbl, fontsize=5.1, fontweight="bold" if lbl in ("UniFlow", "UniFlow-Tok") else "normal", color=col)
     ax.axvline(2.86, ls=":", lw=0.9, color="#4A5568")
     ax.text(2.83, 22.25, "GT\n2.86", fontsize=4.8, ha="right", color="#4A5568")
     ax.set_xlabel("Sparse bg_lap (grid artifact)")
