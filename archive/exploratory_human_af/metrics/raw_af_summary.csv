@@ -1,0 +1,13 @@
+run_tag,af_mode,fold,arch,stage,strategy,k_shot,psnr,ssim,lpips,kid_x1e3,nuclei_dice,nuclei_f1_05,fid,nuclei_dice_nonempty,pcc_gt,wall_seconds
+Breast__u0_base_d192__0shot,raw,Breast,u0_base,0shot,pretrain,0,18.6981,0.4624,0.4602,150.382,0.1705,0.1667,232.655,0.0047,0.3676,133.62
+Breast__u0_base_d192__0shot_halfOD,raw,Breast,u0_base,0shot_halfOD,halfOD,5,18.0894,0.4485,0.4617,152.3,0.17,0.1667,228.812,0.0041,0.3547,2.16
+Breast__u0_base_d192__m6_k20,raw,Breast,u0_base,20shot,m6,20,20.2661,0.5175,0.3334,151.305,0.1836,0.1833,227.642,0.0003,0.3914,119.06
+Breast__u1_up64_only_d192__0shot,raw,Breast,u1_up64_only,0shot,pretrain,0,18.2878,0.4247,0.3812,139.44,0.176,0.175,212.829,0.0012,0.3148,138.69
+Breast__u1_up64_only_d192__0shot_halfOD,raw,Breast,u1_up64_only,0shot_halfOD,halfOD,5,17.4559,0.4071,0.3921,132.06,0.1679,0.1667,206.097,0.0015,0.286,2.1
+Breast__u1_up64_only_d192__m6_k20,raw,Breast,u1_up64_only,20shot,m6,20,21.0344,0.52,0.3213,152.122,0.1685,0.1667,221.524,0.0022,0.4036,179.2
+Kidney__u0_base_d192__0shot,raw,Kidney,u0_base,0shot,pretrain,0,16.2015,0.1887,0.5212,375.593,0.0192,0.0168,317.185,0.0025,0.1071,130.56
+Kidney__u0_base_d192__0shot_halfOD,raw,Kidney,u0_base,0shot_halfOD,halfOD,5,17.5938,0.2246,0.4971,370.552,0.0191,0.0168,309.545,0.0024,0.1111,2.14
+Kidney__u0_base_d192__m6_k20,raw,Kidney,u0_base,20shot,m6,20,21.122,0.4489,0.3267,345.583,0.0188,0.0167,294.201,0.0021,0.1535,107.18
+Kidney__u1_up64_only_d192__0shot,raw,Kidney,u1_up64_only,0shot,pretrain,0,16.5239,0.1986,0.524,355.949,0.0178,0.0167,309.529,0.0011,0.1115,138.48
+Kidney__u1_up64_only_d192__0shot_halfOD,raw,Kidney,u1_up64_only,0shot_halfOD,halfOD,5,17.6708,0.2328,0.5011,353.308,0.0181,0.0167,304.127,0.0015,0.1151,2.09
+Kidney__u1_up64_only_d192__m6_k20,raw,Kidney,u1_up64_only,20shot,m6,20,20.8991,0.4429,0.3375,347.686,0.0167,0.0167,294.184,0.0,0.1569,183.08

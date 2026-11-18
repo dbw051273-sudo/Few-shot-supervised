@@ -1,0 +1,7 @@
+run_tag,af_mode,fold,arch,stage,strategy,k_shot,psnr,ssim,lpips,kid_x1e3,nuclei_dice,nuclei_f1_05,fid,nuclei_dice_nonempty,pcc_gt,wall_seconds
+Breast__u0_base_d192__0shot,p1p99,Breast,u0_base,0shot,pretrain,0,18.9272,0.4423,0.5247,272.879,0.1833,0.1833,307.292,0.0,0.332,131.61
+Breast__u0_base_d192__0shot_halfOD,p1p99,Breast,u0_base,0shot_halfOD,halfOD,5,16.9907,0.3768,0.5286,280.709,0.1833,0.1833,305.663,0.0,0.2879,1.98
+Breast__u0_base_d192__m6_k20,p1p99,Breast,u0_base,20shot,m6,20,20.5409,0.5186,0.335,163.998,0.1671,0.1667,228.529,0.0006,0.3905,162.38
+Breast__u1_up64_only_d192__0shot,p1p99,Breast,u1_up64_only,0shot,pretrain,0,18.8206,0.4325,0.5319,257.231,0.1835,0.1833,299.02,0.0002,0.3458,139.55
+Breast__u1_up64_only_d192__0shot_halfOD,p1p99,Breast,u1_up64_only,0shot_halfOD,halfOD,5,17.4276,0.3845,0.5352,255.892,0.1841,0.1833,291.456,0.001,0.3111,2.02
+Breast__u1_up64_only_d192__m6_k20,p1p99,Breast,u1_up64_only,20shot,m6,20,20.9759,0.5187,0.3214,156.619,0.176,0.175,221.371,0.0012,0.4046,248.34

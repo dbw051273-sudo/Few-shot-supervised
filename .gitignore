@@ -18,5 +18,7 @@ generated_unscreened/
 checkpoints/
 eval_cache/*.npz
 paper/nature-figure-craft/
+HKUST_UniStain_AF*/
+archive/exploratory_human_af/**/*.png
 .DS_Store
 Thumbs.db

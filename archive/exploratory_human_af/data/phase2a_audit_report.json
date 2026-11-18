@@ -1,0 +1,572 @@
+{
+  "splits": {
+    "training": {
+      "Breast": {
+        "total_files": 1344,
+        "subdirs": [
+          "."
+        ],
+        "prefixes": [
+          "Breast"
+        ],
+        "paired_count": 672,
+        "unpaired_af": 0,
+        "unpaired_he": 0,
+        "other_files_count": 0,
+        "other_files_sample": [],
+        "index_min_max": [
+          0,
+          671
+        ],
+        "sample_filenames": [
+          "Breast_AF_0.png",
+          "Breast_AF_1.png",
+          "Breast_AF_10.png",
+          "Breast_AF_100.png",
+          "Breast_AF_101.png",
+          "Breast_AF_102.png",
+          "Breast_AF_103.png",
+          "Breast_AF_104.png"
+        ],
+        "sizes_and_modes": [
+          [
+            "AF",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ],
+          [
+            "HE",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ]
+        ],
+        "af_max_channel_diff_rg": 0.0,
+        "af_max_channel_diff_rb": 0.0,
+        "af_pixel_stats": {
+          "scanned_n": 336,
+          "min": 0.0,
+          "max": 255.0,
+          "p1_mean": 16.99,
+          "p99_mean": 80.47,
+          "mean": 48.49,
+          "std": 14.74,
+          "dark_empty_in_scanned": 15
+        },
+        "he_pixel_stats": {
+          "mean": 195.89,
+          "std": 33.54,
+          "blank_he_in_scanned": 12
+        },
+        "paired_inv_corr_mean": 0.2941,
+        "random_inv_corr_mean": 0.0056,
+        "consec_max_corr_direct_lr_tb": [
+          0.2972,
+          0.2938,
+          0.4048
+        ]
+      },
+      "Kidney": {
+        "total_files": 928,
+        "subdirs": [
+          "."
+        ],
+        "prefixes": [
+          "Kidney"
+        ],
+        "paired_count": 464,
+        "unpaired_af": 0,
+        "unpaired_he": 0,
+        "other_files_count": 0,
+        "other_files_sample": [],
+        "index_min_max": [
+          0,
+          463
+        ],
+        "sample_filenames": [
+          "Kidney_AF_0.png",
+          "Kidney_AF_1.png",
+          "Kidney_AF_10.png",
+          "Kidney_AF_100.png",
+          "Kidney_AF_101.png",
+          "Kidney_AF_102.png",
+          "Kidney_AF_103.png",
+          "Kidney_AF_104.png"
+        ],
+        "sizes_and_modes": [
+          [
+            "AF",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ],
+          [
+            "HE",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ]
+        ],
+        "af_max_channel_diff_rg": 0.0,
+        "af_max_channel_diff_rb": 0.0,
+        "af_pixel_stats": {
+          "scanned_n": 464,
+          "min": 0.0,
+          "max": 255.0,
+          "p1_mean": 3.75,
+          "p99_mean": 169.38,
+          "mean": 77.18,
+          "std": 39.07,
+          "dark_empty_in_scanned": 1
+        },
+        "he_pixel_stats": {
+          "mean": 212.26,
+          "std": 28.59,
+          "blank_he_in_scanned": 3
+        },
+        "paired_inv_corr_mean": 0.1766,
+        "random_inv_corr_mean": -0.0122,
+        "consec_max_corr_direct_lr_tb": [
+          0.1222,
+          0.3588,
+          0.3718
+        ]
+      },
+      "Liver": {
+        "total_files": 1440,
+        "subdirs": [
+          "."
+        ],
+        "prefixes": [
+          "Liver"
+        ],
+        "paired_count": 720,
+        "unpaired_af": 0,
+        "unpaired_he": 0,
+        "other_files_count": 0,
+        "other_files_sample": [],
+        "index_min_max": [
+          0,
+          719
+        ],
+        "sample_filenames": [
+          "Liver_AF_0.png",
+          "Liver_AF_1.png",
+          "Liver_AF_10.png",
+          "Liver_AF_100.png",
+          "Liver_AF_101.png",
+          "Liver_AF_102.png",
+          "Liver_AF_103.png",
+          "Liver_AF_104.png"
+        ],
+        "sizes_and_modes": [
+          [
+            "AF",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ],
+          [
+            "HE",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ]
+        ],
+        "af_max_channel_diff_rg": 0.0,
+        "af_max_channel_diff_rb": 0.0,
+        "af_pixel_stats": {
+          "scanned_n": 360,
+          "min": 0.0,
+          "max": 255.0,
+          "p1_mean": 28.14,
+          "p99_mean": 201.18,
+          "mean": 114.79,
+          "std": 40.87,
+          "dark_empty_in_scanned": 2
+        },
+        "he_pixel_stats": {
+          "mean": 200.34,
+          "std": 35.55,
+          "blank_he_in_scanned": 2
+        },
+        "paired_inv_corr_mean": 0.1668,
+        "random_inv_corr_mean": 0.0083,
+        "consec_max_corr_direct_lr_tb": [
+          0.1283,
+          0.3306,
+          0.2977
+        ]
+      },
+      "Lung": {
+        "total_files": 2080,
+        "subdirs": [
+          "."
+        ],
+        "prefixes": [
+          "Lung"
+        ],
+        "paired_count": 1040,
+        "unpaired_af": 0,
+        "unpaired_he": 0,
+        "other_files_count": 0,
+        "other_files_sample": [],
+        "index_min_max": [
+          0,
+          1039
+        ],
+        "sample_filenames": [
+          "Lung_AF_0.png",
+          "Lung_AF_1.png",
+          "Lung_AF_10.png",
+          "Lung_AF_100.png",
+          "Lung_AF_1000.png",
+          "Lung_AF_1001.png",
+          "Lung_AF_1002.png",
+          "Lung_AF_1003.png"
+        ],
+        "sizes_and_modes": [
+          [
+            "AF",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ],
+          [
+            "HE",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ]
+        ],
+        "af_max_channel_diff_rg": 0.0,
+        "af_max_channel_diff_rb": 0.0,
+        "af_pixel_stats": {
+          "scanned_n": 347,
+          "min": 0.0,
+          "max": 255.0,
+          "p1_mean": 21.79,
+          "p99_mean": 124.8,
+          "mean": 60.75,
+          "std": 22.22,
+          "dark_empty_in_scanned": 0
+        },
+        "he_pixel_stats": {
+          "mean": 185.57,
+          "std": 38.37,
+          "blank_he_in_scanned": 0
+        },
+        "paired_inv_corr_mean": 0.2567,
+        "random_inv_corr_mean": -0.0037,
+        "consec_max_corr_direct_lr_tb": [
+          0.2678,
+          0.4586,
+          0.4961
+        ]
+      }
+    },
+    "testing": {
+      "Breast": {
+        "total_files": 1952,
+        "subdirs": [
+          "."
+        ],
+        "prefixes": [
+          "Breast"
+        ],
+        "paired_count": 976,
+        "unpaired_af": 0,
+        "unpaired_he": 0,
+        "other_files_count": 0,
+        "other_files_sample": [],
+        "index_min_max": [
+          0,
+          975
+        ],
+        "sample_filenames": [
+          "Breast_AF_0.png",
+          "Breast_AF_1.png",
+          "Breast_AF_10.png",
+          "Breast_AF_100.png",
+          "Breast_AF_101.png",
+          "Breast_AF_102.png",
+          "Breast_AF_103.png",
+          "Breast_AF_104.png"
+        ],
+        "sizes_and_modes": [
+          [
+            "AF",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ],
+          [
+            "HE",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ]
+        ],
+        "af_max_channel_diff_rg": 0.0,
+        "af_max_channel_diff_rb": 0.0,
+        "af_pixel_stats": {
+          "scanned_n": 326,
+          "min": 0.0,
+          "max": 255.0,
+          "p1_mean": 10.91,
+          "p99_mean": 67.08,
+          "mean": 33.62,
+          "std": 13.04,
+          "dark_empty_in_scanned": 30
+        },
+        "he_pixel_stats": {
+          "mean": 208.48,
+          "std": 26.42,
+          "blank_he_in_scanned": 28
+        },
+        "paired_inv_corr_mean": 0.3448,
+        "random_inv_corr_mean": -0.0249,
+        "consec_max_corr_direct_lr_tb": [
+          0.3914,
+          0.4756,
+          0.4839
+        ]
+      },
+      "Kidney": {
+        "total_files": 1056,
+        "subdirs": [
+          "."
+        ],
+        "prefixes": [
+          "Kidney"
+        ],
+        "paired_count": 528,
+        "unpaired_af": 0,
+        "unpaired_he": 0,
+        "other_files_count": 0,
+        "other_files_sample": [],
+        "index_min_max": [
+          0,
+          527
+        ],
+        "sample_filenames": [
+          "Kidney_AF_0.png",
+          "Kidney_AF_1.png",
+          "Kidney_AF_10.png",
+          "Kidney_AF_100.png",
+          "Kidney_AF_101.png",
+          "Kidney_AF_102.png",
+          "Kidney_AF_103.png",
+          "Kidney_AF_104.png"
+        ],
+        "sizes_and_modes": [
+          [
+            "AF",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ],
+          [
+            "HE",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ]
+        ],
+        "af_max_channel_diff_rg": 0.0,
+        "af_max_channel_diff_rb": 0.0,
+        "af_pixel_stats": {
+          "scanned_n": 528,
+          "min": 0.0,
+          "max": 255.0,
+          "p1_mean": 2.49,
+          "p99_mean": 162.83,
+          "mean": 73.21,
+          "std": 38.2,
+          "dark_empty_in_scanned": 30
+        },
+        "he_pixel_stats": {
+          "mean": 212.97,
+          "std": 27.9,
+          "blank_he_in_scanned": 37
+        },
+        "paired_inv_corr_mean": 0.1675,
+        "random_inv_corr_mean": -0.0012,
+        "consec_max_corr_direct_lr_tb": [
+          0.1358,
+          0.4883,
+          0.3861
+        ]
+      },
+      "Liver": {
+        "total_files": 1408,
+        "subdirs": [
+          "."
+        ],
+        "prefixes": [
+          "Liver"
+        ],
+        "paired_count": 704,
+        "unpaired_af": 0,
+        "unpaired_he": 0,
+        "other_files_count": 0,
+        "other_files_sample": [],
+        "index_min_max": [
+          0,
+          703
+        ],
+        "sample_filenames": [
+          "Liver_AF_0.png",
+          "Liver_AF_1.png",
+          "Liver_AF_10.png",
+          "Liver_AF_100.png",
+          "Liver_AF_101.png",
+          "Liver_AF_102.png",
+          "Liver_AF_103.png",
+          "Liver_AF_104.png"
+        ],
+        "sizes_and_modes": [
+          [
+            "AF",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ],
+          [
+            "HE",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ]
+        ],
+        "af_max_channel_diff_rg": 0.0,
+        "af_max_channel_diff_rb": 0.0,
+        "af_pixel_stats": {
+          "scanned_n": 352,
+          "min": 0.0,
+          "max": 255.0,
+          "p1_mean": 15.17,
+          "p99_mean": 200.11,
+          "mean": 97.89,
+          "std": 45.19,
+          "dark_empty_in_scanned": 9
+        },
+        "he_pixel_stats": {
+          "mean": 207.32,
+          "std": 33.44,
+          "blank_he_in_scanned": 10
+        },
+        "paired_inv_corr_mean": 0.2369,
+        "random_inv_corr_mean": -0.0049,
+        "consec_max_corr_direct_lr_tb": [
+          0.1637,
+          0.388,
+          0.2839
+        ]
+      },
+      "Lung": {
+        "total_files": 3392,
+        "subdirs": [
+          "."
+        ],
+        "prefixes": [
+          "Lung"
+        ],
+        "paired_count": 1696,
+        "unpaired_af": 0,
+        "unpaired_he": 0,
+        "other_files_count": 0,
+        "other_files_sample": [],
+        "index_min_max": [
+          0,
+          1695
+        ],
+        "sample_filenames": [
+          "Lung_AF_0.png",
+          "Lung_AF_1.png",
+          "Lung_AF_10.png",
+          "Lung_AF_100.png",
+          "Lung_AF_1000.png",
+          "Lung_AF_1001.png",
+          "Lung_AF_1002.png",
+          "Lung_AF_1003.png"
+        ],
+        "sizes_and_modes": [
+          [
+            "AF",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ],
+          [
+            "HE",
+            [
+              512,
+              512
+            ],
+            "RGB"
+          ]
+        ],
+        "af_max_channel_diff_rg": 0.0,
+        "af_max_channel_diff_rb": 0.0,
+        "af_pixel_stats": {
+          "scanned_n": 340,
+          "min": 0.0,
+          "max": 255.0,
+          "p1_mean": 19.32,
+          "p99_mean": 128.24,
+          "mean": 59.27,
+          "std": 23.78,
+          "dark_empty_in_scanned": 2
+        },
+        "he_pixel_stats": {
+          "mean": 185.55,
+          "std": 37.97,
+          "blank_he_in_scanned": 0
+        },
+        "paired_inv_corr_mean": 0.2774,
+        "random_inv_corr_mean": -0.0025,
+        "consec_max_corr_direct_lr_tb": [
+          0.2433,
+          0.6743,
+          0.4865
+        ]
+      }
+    }
+  },
+  "meta_files": [],
+  "duplicate_hashes_across_splits": {},
+  "duplicate_hash_groups": 0,
+  "duplicate_hash_samples": []
+}
