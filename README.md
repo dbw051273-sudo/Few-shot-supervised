@@ -83,6 +83,7 @@ Few-shot-supervised/
 │   ├── round1_losses_and_data.py      # 4-fold LOMO 切分、RAE 预训练、Flow 训练与 SRA 适配
 │   ├── uni_encoder.py                 # 冻结 UNI (ViT-L/16) 特征提取接口
 │   ├── v2_unified_eval.py             # PSNR/SSIM/LPIPS/KID/Cellpose/bg_lap 统一评测管线
+│   ├── eval_downstream.py             # 下游独立大模型(PLIP+CONCH)检索分类 + 核形态与分室OD验证
 │   ├── run_round1_pipeline.py         # Round-1 序列化全量运行器 (默认 --od-weight 0.0)
 │   ├── run_dg_baselines.py            # MixStyle / StainAug / DANN / MLDG 运行器
 │   ├── run_queue2_baselines.py        # Queue-2 官方外部基线运行器
@@ -95,6 +96,7 @@ Few-shot-supervised/
 ├── results/                           # 完整实测指标 (JSON/CSV/MD)、逐图评估表与定性拼接图
 │   ├── round1/                        # 奥卡姆精简后主实验定稿结果 (UniFlow + SRA)
 │   ├── dg_baselines/                  # 四类经典 DG 基线完整结果
+│   ├── downstream_mouse/              # Goal 1 下游验证 (PLIP/CONCH + 核形态/分室OD)
 │   └── archive_exploratory_dwconv_od/ # 早期探索性模块归档 (3x3 DWConv 与显式 L_OD / OASRA)
 └── paper/                             # 论文 LaTeX 源码、编译版 PDF、Nature-style 矢量图与绘图脚本
     ├── UniFlow_论文初稿.tex

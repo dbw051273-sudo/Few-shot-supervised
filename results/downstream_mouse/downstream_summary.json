@@ -1,0 +1,1709 @@
+{
+  "updated_at": "2026-11-18T11:55:26.139934",
+  "vlms": [
+    "vinid/plip",
+    "MahmoodLab/CONCH (conch_ViT-B-16)"
+  ],
+  "runs": [
+    {
+      "label": "Real H&E (GT)",
+      "family": "GT",
+      "stage": "GT",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 1.0,
+        "cossim_by_organ": {
+          "Brain": 1.0,
+          "Breast": 1.0,
+          "Kidney": 1.0,
+          "Liver": 1.0
+        },
+        "retrieval_within_120": {
+          "r1": 100.0,
+          "r5": 100.0,
+          "mrr": 1.0,
+          "by_organ": {
+            "Brain": {
+              "r1": 100.0,
+              "r5": 100.0,
+              "mrr": 1.0
+            },
+            "Breast": {
+              "r1": 100.0,
+              "r5": 100.0,
+              "mrr": 1.0
+            },
+            "Kidney": {
+              "r1": 100.0,
+              "r5": 100.0,
+              "mrr": 1.0
+            },
+            "Liver": {
+              "r1": 100.0,
+              "r5": 100.0,
+              "mrr": 1.0
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 100.0,
+          "r5": 100.0,
+          "mrr": 1.0
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 100.0,
+            "f1": 100.0
+          },
+          "centroid": {
+            "acc": 98.96,
+            "f1": 98.96
+          },
+          "zero_shot_text": {
+            "acc": 63.96,
+            "f1": 61.26
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 1.0,
+        "cossim_by_organ": {
+          "Brain": 1.0,
+          "Breast": 1.0,
+          "Kidney": 1.0,
+          "Liver": 1.0
+        },
+        "retrieval_within_120": {
+          "r1": 100.0,
+          "r5": 100.0,
+          "mrr": 1.0,
+          "by_organ": {
+            "Brain": {
+              "r1": 100.0,
+              "r5": 100.0,
+              "mrr": 1.0
+            },
+            "Breast": {
+              "r1": 100.0,
+              "r5": 100.0,
+              "mrr": 1.0
+            },
+            "Kidney": {
+              "r1": 100.0,
+              "r5": 100.0,
+              "mrr": 1.0
+            },
+            "Liver": {
+              "r1": 100.0,
+              "r5": 100.0,
+              "mrr": 1.0
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 100.0,
+          "r5": 100.0,
+          "mrr": 1.0
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 100.0,
+            "f1": 100.0
+          },
+          "centroid": {
+            "acc": 98.12,
+            "f1": 98.12
+          },
+          "zero_shot_text": {
+            "acc": 84.79,
+            "f1": 84.19
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "gt_means": {
+          "area": 108.01,
+          "ecc": 0.6724,
+          "sol": 0.9395
+        }
+      },
+      "compartment_od": {
+        "gt_means": {
+          "nuc_h": 0.6099,
+          "stroma_e": 0.8245
+        }
+      }
+    },
+    {
+      "label": "UniFlow (0-shot)",
+      "family": "UniFlow",
+      "stage": "0shot",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8705,
+        "cossim_by_organ": {
+          "Brain": 0.8504,
+          "Breast": 0.8109,
+          "Kidney": 0.9046,
+          "Liver": 0.9159
+        },
+        "retrieval_within_120": {
+          "r1": 13.75,
+          "r5": 28.96,
+          "mrr": 0.2331,
+          "by_organ": {
+            "Brain": {
+              "r1": 9.17,
+              "r5": 16.67,
+              "mrr": 0.1562
+            },
+            "Breast": {
+              "r1": 18.33,
+              "r5": 33.33,
+              "mrr": 0.2745
+            },
+            "Kidney": {
+              "r1": 20.0,
+              "r5": 42.5,
+              "mrr": 0.3295
+            },
+            "Liver": {
+              "r1": 7.5,
+              "r5": 23.33,
+              "mrr": 0.1724
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 10.62,
+          "r5": 22.92,
+          "mrr": 0.1836
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 70.21,
+            "f1": 65.72
+          },
+          "centroid": {
+            "acc": 65.0,
+            "f1": 60.93
+          },
+          "zero_shot_text": {
+            "acc": 64.79,
+            "f1": 58.05
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.6539,
+        "cossim_by_organ": {
+          "Brain": 0.557,
+          "Breast": 0.5909,
+          "Kidney": 0.7647,
+          "Liver": 0.7031
+        },
+        "retrieval_within_120": {
+          "r1": 9.17,
+          "r5": 25.21,
+          "mrr": 0.1875,
+          "by_organ": {
+            "Brain": {
+              "r1": 4.17,
+              "r5": 15.0,
+              "mrr": 0.1293
+            },
+            "Breast": {
+              "r1": 20.0,
+              "r5": 47.5,
+              "mrr": 0.3311
+            },
+            "Kidney": {
+              "r1": 2.5,
+              "r5": 18.33,
+              "mrr": 0.119
+            },
+            "Liver": {
+              "r1": 10.0,
+              "r5": 20.0,
+              "mrr": 0.1705
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 8.33,
+          "r5": 23.54,
+          "mrr": 0.1733
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 88.96,
+            "f1": 89.04
+          },
+          "centroid": {
+            "acc": 86.88,
+            "f1": 86.93
+          },
+          "zero_shot_text": {
+            "acc": 66.88,
+            "f1": 65.37
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 471,
+        "area": {
+          "r": 0.1409,
+          "rs": 0.8734,
+          "mae": 38.3391
+        },
+        "eccentricity": {
+          "r": 0.854,
+          "rs": 0.8855,
+          "mae": 0.0324
+        },
+        "solidity": {
+          "r": 0.4992,
+          "rs": 0.618,
+          "mae": 0.0078
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.5604,
+          "rs": 0.6301,
+          "mae": 0.142
+        },
+        "gt_mask_stroma_e": {
+          "r": -0.1047,
+          "rs": -0.0663,
+          "mae": 0.4963
+        },
+        "self_mask_nuc_h": {
+          "r": 0.3467,
+          "rs": 0.4869,
+          "mae": 0.1607
+        },
+        "self_mask_stroma_e": {
+          "r": -0.1096,
+          "rs": -0.0731,
+          "mae": 0.5011
+        }
+      }
+    },
+    {
+      "label": "UniFlow (halfOD)",
+      "family": "UniFlow",
+      "stage": "halfOD",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8598,
+        "cossim_by_organ": {
+          "Brain": 0.8349,
+          "Breast": 0.8405,
+          "Kidney": 0.8854,
+          "Liver": 0.8784
+        },
+        "retrieval_within_120": {
+          "r1": 15.21,
+          "r5": 30.21,
+          "mrr": 0.2412,
+          "by_organ": {
+            "Brain": {
+              "r1": 10.0,
+              "r5": 15.0,
+              "mrr": 0.15
+            },
+            "Breast": {
+              "r1": 18.33,
+              "r5": 40.83,
+              "mrr": 0.3046
+            },
+            "Kidney": {
+              "r1": 29.17,
+              "r5": 50.0,
+              "mrr": 0.4022
+            },
+            "Liver": {
+              "r1": 3.33,
+              "r5": 15.0,
+              "mrr": 0.1081
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 13.33,
+          "r5": 26.67,
+          "mrr": 0.2106
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 89.17,
+            "f1": 88.93
+          },
+          "centroid": {
+            "acc": 84.17,
+            "f1": 84.04
+          },
+          "zero_shot_text": {
+            "acc": 68.96,
+            "f1": 64.29
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.684,
+        "cossim_by_organ": {
+          "Brain": 0.621,
+          "Breast": 0.5827,
+          "Kidney": 0.7979,
+          "Liver": 0.7346
+        },
+        "retrieval_within_120": {
+          "r1": 11.04,
+          "r5": 25.62,
+          "mrr": 0.1998,
+          "by_organ": {
+            "Brain": {
+              "r1": 8.33,
+              "r5": 16.67,
+              "mrr": 0.1565
+            },
+            "Breast": {
+              "r1": 20.0,
+              "r5": 40.83,
+              "mrr": 0.3192
+            },
+            "Kidney": {
+              "r1": 6.67,
+              "r5": 20.0,
+              "mrr": 0.1483
+            },
+            "Liver": {
+              "r1": 9.17,
+              "r5": 25.0,
+              "mrr": 0.1752
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 10.42,
+          "r5": 24.17,
+          "mrr": 0.1858
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 91.04,
+            "f1": 91.14
+          },
+          "centroid": {
+            "acc": 89.38,
+            "f1": 89.5
+          },
+          "zero_shot_text": {
+            "acc": 64.17,
+            "f1": 61.79
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 473,
+        "area": {
+          "r": 0.1425,
+          "rs": 0.8838,
+          "mae": 36.8723
+        },
+        "eccentricity": {
+          "r": 0.8724,
+          "rs": 0.8892,
+          "mae": 0.0324
+        },
+        "solidity": {
+          "r": 0.5809,
+          "rs": 0.6695,
+          "mae": 0.0071
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.6267,
+          "rs": 0.6763,
+          "mae": 0.135
+        },
+        "gt_mask_stroma_e": {
+          "r": 0.5511,
+          "rs": 0.495,
+          "mae": 0.3179
+        },
+        "self_mask_nuc_h": {
+          "r": 0.425,
+          "rs": 0.5438,
+          "mae": 0.1499
+        },
+        "self_mask_stroma_e": {
+          "r": 0.5255,
+          "rs": 0.4609,
+          "mae": 0.3259
+        }
+      }
+    },
+    {
+      "label": "UniFlow (20-shot)",
+      "family": "UniFlow",
+      "stage": "20shot",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8891,
+        "cossim_by_organ": {
+          "Brain": 0.8935,
+          "Breast": 0.8786,
+          "Kidney": 0.9009,
+          "Liver": 0.8834
+        },
+        "retrieval_within_120": {
+          "r1": 22.08,
+          "r5": 40.62,
+          "mrr": 0.3248,
+          "by_organ": {
+            "Brain": {
+              "r1": 16.67,
+              "r5": 34.17,
+              "mrr": 0.2734
+            },
+            "Breast": {
+              "r1": 20.83,
+              "r5": 40.83,
+              "mrr": 0.3227
+            },
+            "Kidney": {
+              "r1": 43.33,
+              "r5": 68.33,
+              "mrr": 0.5515
+            },
+            "Liver": {
+              "r1": 7.5,
+              "r5": 19.17,
+              "mrr": 0.1518
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 22.08,
+          "r5": 40.21,
+          "mrr": 0.3228
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 99.38,
+            "f1": 99.37
+          },
+          "centroid": {
+            "acc": 98.33,
+            "f1": 98.33
+          },
+          "zero_shot_text": {
+            "acc": 61.67,
+            "f1": 58.49
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.7746,
+        "cossim_by_organ": {
+          "Brain": 0.7795,
+          "Breast": 0.7068,
+          "Kidney": 0.8339,
+          "Liver": 0.7781
+        },
+        "retrieval_within_120": {
+          "r1": 15.21,
+          "r5": 40.62,
+          "mrr": 0.2786,
+          "by_organ": {
+            "Brain": {
+              "r1": 20.0,
+              "r5": 40.83,
+              "mrr": 0.318
+            },
+            "Breast": {
+              "r1": 20.0,
+              "r5": 60.0,
+              "mrr": 0.3764
+            },
+            "Kidney": {
+              "r1": 15.83,
+              "r5": 40.0,
+              "mrr": 0.2784
+            },
+            "Liver": {
+              "r1": 5.0,
+              "r5": 21.67,
+              "mrr": 0.1414
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 15.0,
+          "r5": 40.0,
+          "mrr": 0.2748
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 99.79,
+            "f1": 99.79
+          },
+          "centroid": {
+            "acc": 98.12,
+            "f1": 98.13
+          },
+          "zero_shot_text": {
+            "acc": 77.29,
+            "f1": 75.31
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 475,
+        "area": {
+          "r": 0.1296,
+          "rs": 0.9039,
+          "mae": 36.9215
+        },
+        "eccentricity": {
+          "r": 0.8993,
+          "rs": 0.9017,
+          "mae": 0.0297
+        },
+        "solidity": {
+          "r": 0.6467,
+          "rs": 0.6881,
+          "mae": 0.0063
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.8306,
+          "rs": 0.8345,
+          "mae": 0.0874
+        },
+        "gt_mask_stroma_e": {
+          "r": 0.9473,
+          "rs": 0.9324,
+          "mae": 0.1102
+        },
+        "self_mask_nuc_h": {
+          "r": 0.7482,
+          "rs": 0.7608,
+          "mae": 0.0985
+        },
+        "self_mask_stroma_e": {
+          "r": 0.9433,
+          "rs": 0.9292,
+          "mae": 0.1136
+        }
+      }
+    },
+    {
+      "label": "BaseFlow (0-shot)",
+      "family": "BaseFlow",
+      "stage": "0shot",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8546,
+        "cossim_by_organ": {
+          "Brain": 0.8236,
+          "Breast": 0.8032,
+          "Kidney": 0.8904,
+          "Liver": 0.9012
+        },
+        "retrieval_within_120": {
+          "r1": 12.09,
+          "r5": 28.12,
+          "mrr": 0.2143,
+          "by_organ": {
+            "Brain": {
+              "r1": 9.17,
+              "r5": 19.17,
+              "mrr": 0.155
+            },
+            "Breast": {
+              "r1": 16.67,
+              "r5": 29.17,
+              "mrr": 0.2517
+            },
+            "Kidney": {
+              "r1": 16.67,
+              "r5": 40.83,
+              "mrr": 0.2865
+            },
+            "Liver": {
+              "r1": 5.83,
+              "r5": 23.33,
+              "mrr": 0.164
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 8.54,
+          "r5": 22.29,
+          "mrr": 0.1588
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 60.42,
+            "f1": 59.3
+          },
+          "centroid": {
+            "acc": 55.21,
+            "f1": 53.47
+          },
+          "zero_shot_text": {
+            "acc": 67.92,
+            "f1": 60.76
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.6383,
+        "cossim_by_organ": {
+          "Brain": 0.5615,
+          "Breast": 0.5461,
+          "Kidney": 0.7512,
+          "Liver": 0.6943
+        },
+        "retrieval_within_120": {
+          "r1": 7.91,
+          "r5": 21.25,
+          "mrr": 0.1655,
+          "by_organ": {
+            "Brain": {
+              "r1": 5.83,
+              "r5": 15.83,
+              "mrr": 0.1414
+            },
+            "Breast": {
+              "r1": 13.33,
+              "r5": 34.17,
+              "mrr": 0.2507
+            },
+            "Kidney": {
+              "r1": 4.17,
+              "r5": 15.0,
+              "mrr": 0.111
+            },
+            "Liver": {
+              "r1": 8.33,
+              "r5": 20.0,
+              "mrr": 0.1588
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 7.08,
+          "r5": 19.38,
+          "mrr": 0.1485
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 86.25,
+            "f1": 86.6
+          },
+          "centroid": {
+            "acc": 86.04,
+            "f1": 85.92
+          },
+          "zero_shot_text": {
+            "acc": 64.58,
+            "f1": 62.54
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 459,
+        "area": {
+          "r": 0.1457,
+          "rs": 0.8583,
+          "mae": 36.8958
+        },
+        "eccentricity": {
+          "r": 0.7824,
+          "rs": 0.8193,
+          "mae": 0.0368
+        },
+        "solidity": {
+          "r": 0.4385,
+          "rs": 0.5765,
+          "mae": 0.0081
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.4247,
+          "rs": 0.5359,
+          "mae": 0.1619
+        },
+        "gt_mask_stroma_e": {
+          "r": -0.2015,
+          "rs": -0.2376,
+          "mae": 0.5871
+        },
+        "self_mask_nuc_h": {
+          "r": 0.2088,
+          "rs": 0.3574,
+          "mae": 0.1831
+        },
+        "self_mask_stroma_e": {
+          "r": -0.1984,
+          "rs": -0.2398,
+          "mae": 0.5881
+        }
+      }
+    },
+    {
+      "label": "BaseFlow (halfOD)",
+      "family": "BaseFlow",
+      "stage": "halfOD",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8459,
+        "cossim_by_organ": {
+          "Brain": 0.8041,
+          "Breast": 0.8326,
+          "Kidney": 0.8791,
+          "Liver": 0.8679
+        },
+        "retrieval_within_120": {
+          "r1": 10.83,
+          "r5": 26.66,
+          "mrr": 0.2034,
+          "by_organ": {
+            "Brain": {
+              "r1": 5.83,
+              "r5": 12.5,
+              "mrr": 0.1173
+            },
+            "Breast": {
+              "r1": 14.17,
+              "r5": 35.83,
+              "mrr": 0.2635
+            },
+            "Kidney": {
+              "r1": 20.0,
+              "r5": 42.5,
+              "mrr": 0.3178
+            },
+            "Liver": {
+              "r1": 3.33,
+              "r5": 15.83,
+              "mrr": 0.1148
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 9.58,
+          "r5": 22.92,
+          "mrr": 0.1742
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 79.58,
+            "f1": 79.51
+          },
+          "centroid": {
+            "acc": 72.08,
+            "f1": 72.33
+          },
+          "zero_shot_text": {
+            "acc": 70.21,
+            "f1": 64.84
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.6665,
+        "cossim_by_organ": {
+          "Brain": 0.6052,
+          "Breast": 0.5486,
+          "Kidney": 0.7802,
+          "Liver": 0.732
+        },
+        "retrieval_within_120": {
+          "r1": 8.54,
+          "r5": 22.71,
+          "mrr": 0.1715,
+          "by_organ": {
+            "Brain": {
+              "r1": 7.5,
+              "r5": 17.5,
+              "mrr": 0.1509
+            },
+            "Breast": {
+              "r1": 13.33,
+              "r5": 34.17,
+              "mrr": 0.2495
+            },
+            "Kidney": {
+              "r1": 6.67,
+              "r5": 16.67,
+              "mrr": 0.1362
+            },
+            "Liver": {
+              "r1": 6.67,
+              "r5": 22.5,
+              "mrr": 0.1493
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 7.71,
+          "r5": 20.83,
+          "mrr": 0.1552
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 88.54,
+            "f1": 88.72
+          },
+          "centroid": {
+            "acc": 85.21,
+            "f1": 85.35
+          },
+          "zero_shot_text": {
+            "acc": 60.0,
+            "f1": 56.91
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 464,
+        "area": {
+          "r": 0.1396,
+          "rs": 0.8545,
+          "mae": 36.5288
+        },
+        "eccentricity": {
+          "r": 0.8147,
+          "rs": 0.853,
+          "mae": 0.0356
+        },
+        "solidity": {
+          "r": 0.478,
+          "rs": 0.6147,
+          "mae": 0.0077
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.5485,
+          "rs": 0.6092,
+          "mae": 0.1445
+        },
+        "gt_mask_stroma_e": {
+          "r": 0.3376,
+          "rs": 0.2669,
+          "mae": 0.4355
+        },
+        "self_mask_nuc_h": {
+          "r": 0.2048,
+          "rs": 0.4022,
+          "mae": 0.1706
+        },
+        "self_mask_stroma_e": {
+          "r": 0.3294,
+          "rs": 0.2576,
+          "mae": 0.4391
+        }
+      }
+    },
+    {
+      "label": "BaseFlow (20-shot)",
+      "family": "BaseFlow",
+      "stage": "20shot",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8802,
+        "cossim_by_organ": {
+          "Brain": 0.8851,
+          "Breast": 0.8699,
+          "Kidney": 0.8945,
+          "Liver": 0.8712
+        },
+        "retrieval_within_120": {
+          "r1": 17.71,
+          "r5": 35.21,
+          "mrr": 0.2775,
+          "by_organ": {
+            "Brain": {
+              "r1": 12.5,
+              "r5": 28.33,
+              "mrr": 0.2275
+            },
+            "Breast": {
+              "r1": 15.83,
+              "r5": 36.67,
+              "mrr": 0.2729
+            },
+            "Kidney": {
+              "r1": 38.33,
+              "r5": 61.67,
+              "mrr": 0.4952
+            },
+            "Liver": {
+              "r1": 4.17,
+              "r5": 14.17,
+              "mrr": 0.1143
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 17.29,
+          "r5": 35.0,
+          "mrr": 0.272
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 98.96,
+            "f1": 98.96
+          },
+          "centroid": {
+            "acc": 97.71,
+            "f1": 97.71
+          },
+          "zero_shot_text": {
+            "acc": 61.67,
+            "f1": 58.32
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.75,
+        "cossim_by_organ": {
+          "Brain": 0.7666,
+          "Breast": 0.6641,
+          "Kidney": 0.8117,
+          "Liver": 0.7577
+        },
+        "retrieval_within_120": {
+          "r1": 12.5,
+          "r5": 32.71,
+          "mrr": 0.2362,
+          "by_organ": {
+            "Brain": {
+              "r1": 17.5,
+              "r5": 37.5,
+              "mrr": 0.2904
+            },
+            "Breast": {
+              "r1": 17.5,
+              "r5": 43.33,
+              "mrr": 0.3098
+            },
+            "Kidney": {
+              "r1": 10.83,
+              "r5": 34.17,
+              "mrr": 0.2199
+            },
+            "Liver": {
+              "r1": 4.17,
+              "r5": 15.83,
+              "mrr": 0.1247
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 11.88,
+          "r5": 32.29,
+          "mrr": 0.2292
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 98.96,
+            "f1": 98.96
+          },
+          "centroid": {
+            "acc": 97.08,
+            "f1": 97.09
+          },
+          "zero_shot_text": {
+            "acc": 70.62,
+            "f1": 66.32
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 472,
+        "area": {
+          "r": 0.1342,
+          "rs": 0.9114,
+          "mae": 37.2935
+        },
+        "eccentricity": {
+          "r": 0.8924,
+          "rs": 0.8996,
+          "mae": 0.0314
+        },
+        "solidity": {
+          "r": 0.6174,
+          "rs": 0.7338,
+          "mae": 0.0059
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.7817,
+          "rs": 0.7499,
+          "mae": 0.1001
+        },
+        "gt_mask_stroma_e": {
+          "r": 0.9131,
+          "rs": 0.8704,
+          "mae": 0.1315
+        },
+        "self_mask_nuc_h": {
+          "r": 0.5887,
+          "rs": 0.6518,
+          "mae": 0.1153
+        },
+        "self_mask_stroma_e": {
+          "r": 0.9091,
+          "rs": 0.8669,
+          "mae": 0.1348
+        }
+      }
+    },
+    {
+      "label": "MixStyle (20-shot)",
+      "family": "MixStyle",
+      "stage": "20shot",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8793,
+        "cossim_by_organ": {
+          "Brain": 0.8844,
+          "Breast": 0.8698,
+          "Kidney": 0.8945,
+          "Liver": 0.8683
+        },
+        "retrieval_within_120": {
+          "r1": 16.04,
+          "r5": 35.83,
+          "mrr": 0.2674,
+          "by_organ": {
+            "Brain": {
+              "r1": 10.0,
+              "r5": 30.0,
+              "mrr": 0.2091
+            },
+            "Breast": {
+              "r1": 15.83,
+              "r5": 37.5,
+              "mrr": 0.2736
+            },
+            "Kidney": {
+              "r1": 33.33,
+              "r5": 58.33,
+              "mrr": 0.4569
+            },
+            "Liver": {
+              "r1": 5.0,
+              "r5": 17.5,
+              "mrr": 0.1299
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 16.04,
+          "r5": 35.0,
+          "mrr": 0.2635
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 98.75,
+            "f1": 98.75
+          },
+          "centroid": {
+            "acc": 96.04,
+            "f1": 96.04
+          },
+          "zero_shot_text": {
+            "acc": 63.33,
+            "f1": 60.28
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.7473,
+        "cossim_by_organ": {
+          "Brain": 0.7671,
+          "Breast": 0.6587,
+          "Kidney": 0.8097,
+          "Liver": 0.7537
+        },
+        "retrieval_within_120": {
+          "r1": 11.67,
+          "r5": 32.5,
+          "mrr": 0.2261,
+          "by_organ": {
+            "Brain": {
+              "r1": 16.67,
+              "r5": 40.0,
+              "mrr": 0.2904
+            },
+            "Breast": {
+              "r1": 16.67,
+              "r5": 45.83,
+              "mrr": 0.2991
+            },
+            "Kidney": {
+              "r1": 8.33,
+              "r5": 28.33,
+              "mrr": 0.1964
+            },
+            "Liver": {
+              "r1": 5.0,
+              "r5": 15.83,
+              "mrr": 0.1185
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 11.46,
+          "r5": 32.29,
+          "mrr": 0.2221
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 99.38,
+            "f1": 99.37
+          },
+          "centroid": {
+            "acc": 97.5,
+            "f1": 97.5
+          },
+          "zero_shot_text": {
+            "acc": 72.92,
+            "f1": 69.26
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 476,
+        "area": {
+          "r": 0.138,
+          "rs": 0.9147,
+          "mae": 37.8028
+        },
+        "eccentricity": {
+          "r": 0.8943,
+          "rs": 0.8991,
+          "mae": 0.0308
+        },
+        "solidity": {
+          "r": 0.6401,
+          "rs": 0.7173,
+          "mae": 0.0062
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.766,
+          "rs": 0.7546,
+          "mae": 0.1037
+        },
+        "gt_mask_stroma_e": {
+          "r": 0.9224,
+          "rs": 0.8767,
+          "mae": 0.1289
+        },
+        "self_mask_nuc_h": {
+          "r": 0.6956,
+          "rs": 0.6854,
+          "mae": 0.1106
+        },
+        "self_mask_stroma_e": {
+          "r": 0.918,
+          "rs": 0.8723,
+          "mae": 0.1325
+        }
+      }
+    },
+    {
+      "label": "StainAug (20-shot)",
+      "family": "StainAug",
+      "stage": "20shot",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8798,
+        "cossim_by_organ": {
+          "Brain": 0.8851,
+          "Breast": 0.8718,
+          "Kidney": 0.8936,
+          "Liver": 0.8689
+        },
+        "retrieval_within_120": {
+          "r1": 18.12,
+          "r5": 37.29,
+          "mrr": 0.281,
+          "by_organ": {
+            "Brain": {
+              "r1": 13.33,
+              "r5": 30.0,
+              "mrr": 0.2341
+            },
+            "Breast": {
+              "r1": 17.5,
+              "r5": 41.67,
+              "mrr": 0.2932
+            },
+            "Kidney": {
+              "r1": 36.67,
+              "r5": 62.5,
+              "mrr": 0.4801
+            },
+            "Liver": {
+              "r1": 5.0,
+              "r5": 15.0,
+              "mrr": 0.1165
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 17.92,
+          "r5": 36.67,
+          "mrr": 0.276
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 98.54,
+            "f1": 98.55
+          },
+          "centroid": {
+            "acc": 97.08,
+            "f1": 97.08
+          },
+          "zero_shot_text": {
+            "acc": 61.46,
+            "f1": 57.83
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.7484,
+        "cossim_by_organ": {
+          "Brain": 0.7659,
+          "Breast": 0.663,
+          "Kidney": 0.8123,
+          "Liver": 0.7523
+        },
+        "retrieval_within_120": {
+          "r1": 12.09,
+          "r5": 35.21,
+          "mrr": 0.2354,
+          "by_organ": {
+            "Brain": {
+              "r1": 19.17,
+              "r5": 38.33,
+              "mrr": 0.3006
+            },
+            "Breast": {
+              "r1": 14.17,
+              "r5": 49.17,
+              "mrr": 0.2973
+            },
+            "Kidney": {
+              "r1": 11.67,
+              "r5": 35.0,
+              "mrr": 0.2227
+            },
+            "Liver": {
+              "r1": 3.33,
+              "r5": 18.33,
+              "mrr": 0.121
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 11.88,
+          "r5": 34.17,
+          "mrr": 0.2297
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 99.17,
+            "f1": 99.17
+          },
+          "centroid": {
+            "acc": 96.67,
+            "f1": 96.69
+          },
+          "zero_shot_text": {
+            "acc": 71.88,
+            "f1": 68.67
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 475,
+        "area": {
+          "r": 0.1307,
+          "rs": 0.8984,
+          "mae": 37.6761
+        },
+        "eccentricity": {
+          "r": 0.8904,
+          "rs": 0.8983,
+          "mae": 0.0308
+        },
+        "solidity": {
+          "r": 0.6412,
+          "rs": 0.7202,
+          "mae": 0.0062
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.7718,
+          "rs": 0.7375,
+          "mae": 0.1019
+        },
+        "gt_mask_stroma_e": {
+          "r": 0.9248,
+          "rs": 0.8859,
+          "mae": 0.1256
+        },
+        "self_mask_nuc_h": {
+          "r": 0.6536,
+          "rs": 0.6721,
+          "mae": 0.1129
+        },
+        "self_mask_stroma_e": {
+          "r": 0.9206,
+          "rs": 0.8827,
+          "mae": 0.1292
+        }
+      }
+    },
+    {
+      "label": "DANN (20-shot)",
+      "family": "DANN",
+      "stage": "20shot",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8579,
+        "cossim_by_organ": {
+          "Brain": 0.8473,
+          "Breast": 0.8473,
+          "Kidney": 0.8866,
+          "Liver": 0.8503
+        },
+        "retrieval_within_120": {
+          "r1": 12.29,
+          "r5": 29.79,
+          "mrr": 0.2227,
+          "by_organ": {
+            "Brain": {
+              "r1": 6.67,
+              "r5": 25.0,
+              "mrr": 0.178
+            },
+            "Breast": {
+              "r1": 10.0,
+              "r5": 30.83,
+              "mrr": 0.2079
+            },
+            "Kidney": {
+              "r1": 29.17,
+              "r5": 51.67,
+              "mrr": 0.4042
+            },
+            "Liver": {
+              "r1": 3.33,
+              "r5": 11.67,
+              "mrr": 0.1005
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 11.88,
+          "r5": 28.54,
+          "mrr": 0.2147
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 98.12,
+            "f1": 98.14
+          },
+          "centroid": {
+            "acc": 97.71,
+            "f1": 97.71
+          },
+          "zero_shot_text": {
+            "acc": 58.75,
+            "f1": 54.7
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.687,
+        "cossim_by_organ": {
+          "Brain": 0.6674,
+          "Breast": 0.6226,
+          "Kidney": 0.7604,
+          "Liver": 0.6975
+        },
+        "retrieval_within_120": {
+          "r1": 9.17,
+          "r5": 29.17,
+          "mrr": 0.197,
+          "by_organ": {
+            "Brain": {
+              "r1": 10.0,
+              "r5": 30.83,
+              "mrr": 0.2001
+            },
+            "Breast": {
+              "r1": 15.0,
+              "r5": 44.17,
+              "mrr": 0.3011
+            },
+            "Kidney": {
+              "r1": 6.67,
+              "r5": 24.17,
+              "mrr": 0.1582
+            },
+            "Liver": {
+              "r1": 5.0,
+              "r5": 17.5,
+              "mrr": 0.1285
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 8.96,
+          "r5": 26.88,
+          "mrr": 0.1886
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 96.88,
+            "f1": 96.89
+          },
+          "centroid": {
+            "acc": 96.25,
+            "f1": 96.27
+          },
+          "zero_shot_text": {
+            "acc": 79.17,
+            "f1": 78.73
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 448,
+        "area": {
+          "r": 0.1901,
+          "rs": 0.8842,
+          "mae": 33.2395
+        },
+        "eccentricity": {
+          "r": 0.8762,
+          "rs": 0.9033,
+          "mae": 0.031
+        },
+        "solidity": {
+          "r": 0.395,
+          "rs": 0.6451,
+          "mae": 0.008
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.6904,
+          "rs": 0.685,
+          "mae": 0.1164
+        },
+        "gt_mask_stroma_e": {
+          "r": 0.8675,
+          "rs": 0.7718,
+          "mae": 0.1708
+        },
+        "self_mask_nuc_h": {
+          "r": 0.5021,
+          "rs": 0.5395,
+          "mae": 0.1417
+        },
+        "self_mask_stroma_e": {
+          "r": 0.8538,
+          "rs": 0.7437,
+          "mae": 0.1767
+        }
+      }
+    },
+    {
+      "label": "MLDG (20-shot)",
+      "family": "MLDG",
+      "stage": "20shot",
+      "n_test": 480,
+      "plip": {
+        "cossim_mean": 0.8799,
+        "cossim_by_organ": {
+          "Brain": 0.8854,
+          "Breast": 0.8704,
+          "Kidney": 0.8939,
+          "Liver": 0.87
+        },
+        "retrieval_within_120": {
+          "r1": 16.67,
+          "r5": 34.38,
+          "mrr": 0.27,
+          "by_organ": {
+            "Brain": {
+              "r1": 10.83,
+              "r5": 27.5,
+              "mrr": 0.2153
+            },
+            "Breast": {
+              "r1": 16.67,
+              "r5": 40.0,
+              "mrr": 0.283
+            },
+            "Kidney": {
+              "r1": 35.0,
+              "r5": 59.17,
+              "mrr": 0.4749
+            },
+            "Liver": {
+              "r1": 4.17,
+              "r5": 10.83,
+              "mrr": 0.1067
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 16.67,
+          "r5": 33.54,
+          "mrr": 0.2661
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 98.96,
+            "f1": 98.96
+          },
+          "centroid": {
+            "acc": 97.08,
+            "f1": 97.08
+          },
+          "zero_shot_text": {
+            "acc": 61.46,
+            "f1": 57.98
+          }
+        }
+      },
+      "conch": {
+        "cossim_mean": 0.7514,
+        "cossim_by_organ": {
+          "Brain": 0.7681,
+          "Breast": 0.6658,
+          "Kidney": 0.8143,
+          "Liver": 0.7575
+        },
+        "retrieval_within_120": {
+          "r1": 11.67,
+          "r5": 33.75,
+          "mrr": 0.2292,
+          "by_organ": {
+            "Brain": {
+              "r1": 18.33,
+              "r5": 40.0,
+              "mrr": 0.2952
+            },
+            "Breast": {
+              "r1": 14.17,
+              "r5": 49.17,
+              "mrr": 0.2943
+            },
+            "Kidney": {
+              "r1": 10.0,
+              "r5": 31.67,
+              "mrr": 0.2153
+            },
+            "Liver": {
+              "r1": 4.17,
+              "r5": 14.17,
+              "mrr": 0.1121
+            }
+          }
+        },
+        "retrieval_pooled_480": {
+          "r1": 11.67,
+          "r5": 32.92,
+          "mrr": 0.2254
+        },
+        "organ_cls": {
+          "linear_probe": {
+            "acc": 98.54,
+            "f1": 98.54
+          },
+          "centroid": {
+            "acc": 97.08,
+            "f1": 97.08
+          },
+          "zero_shot_text": {
+            "acc": 70.21,
+            "f1": 66.47
+          }
+        }
+      },
+      "morphology": {
+        "nonempty_gt_n": 476,
+        "joint_valid_n": 476,
+        "area": {
+          "r": 0.1345,
+          "rs": 0.9074,
+          "mae": 37.5317
+        },
+        "eccentricity": {
+          "r": 0.9012,
+          "rs": 0.9076,
+          "mae": 0.0311
+        },
+        "solidity": {
+          "r": 0.5988,
+          "rs": 0.6629,
+          "mae": 0.0065
+        }
+      },
+      "compartment_od": {
+        "gt_mask_nuc_h": {
+          "r": 0.7737,
+          "rs": 0.7586,
+          "mae": 0.1021
+        },
+        "gt_mask_stroma_e": {
+          "r": 0.9136,
+          "rs": 0.862,
+          "mae": 0.1322
+        },
+        "self_mask_nuc_h": {
+          "r": 0.7285,
+          "rs": 0.6965,
+          "mae": 0.1093
+        },
+        "self_mask_stroma_e": {
+          "r": 0.9086,
+          "rs": 0.8572,
+          "mae": 0.1356
+        }
+      }
+    }
+  ]
+}

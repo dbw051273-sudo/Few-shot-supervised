@@ -479,6 +479,69 @@ NaiveFT + SWA + Jitter（无源域回放） & \textbf{24.19} & \textbf{0.1557} &
 \end{tabular}}
 \end{table*}
 
+\subsection{独立病理大模型语义与细胞核生物区室下游验证}\label{sec:downstream}
+为避免训练期调用冻结 \texttt{UNI} 特征造成的潜在循环验证偏差，我们在全四器官 Clean-480 测试集（$4\times 120=480$ 张）上构建了严格禁用 \texttt{UNI} 的双维客观下游验证框架（代码与明细见仓库 \texttt{scripts/eval\_downstream.py} 及 \texttt{results/downstream\_mouse/}）：
+
+\begin{enumerate}
+    \item \textbf{独立多模态病理大模型（PLIP \& CONCH）语义检索与器官分类}：加载与生成器完全独立的 \texttt{PLIP}（\texttt{vinid/plip}）与 \texttt{CONCH}（\texttt{conch\_ViT-B-16}）提取 $512$ 维归一化图像嵌入，评估（a）生成图与真值 H\&E 的配对余弦相似度（CosSim$\uparrow$）；（b）跨图检索（生成图作为 Query 检索单器官 $120$ 图库与全四器官 $480$ 混合图库真值，汇报 R@1$\uparrow$ 与 MRR$\uparrow$）；（c）基于互不重叠的 $1{,}920$ 张真值训练集（$4\times 480$）拟合的线性探针（Linear Probe）及 \texttt{CONCH} 零样本文本提示分类准确率（真值上界：\texttt{PLIP} 线性探针 $100.00\%$，\texttt{CONCH} 线性探针 $100.00\%$、零样本文本 $84.79\%$）。如表~\ref{tab:downstream_vlm} 所示，从 \texttt{0-shot $\to$ halfOD $\to$ 20-shot}，\methodname{} 的 \texttt{CONCH} 余弦相似度单调攀升（$0.6539 \to 0.6840 \to \mathbf{0.7746}$），\texttt{PLIP} 线性探针器官分类恢复率由 $70.21\%$ 经免训练 \texttt{halfOD} 跃升至 $89.17\%$ 并于 20-shot 达 \textbf{$99.38\%$}（\texttt{CONCH} 达 \textbf{$99.79\%$}）。在 20-shot 同协议对照中，\methodname{} 在两大独立大模型上的配对相似度、单器官/全库检索 R@1 与 MRR 均居首位（如 \texttt{PLIP} 480-库 R@1 达 \textbf{$22.08\%$} 对 \texttt{BaseFlow} $17.29\%$ 与 \texttt{MLDG} $16.67\%$；\texttt{DANN} 虽在文本分类获 $79.17\%$，但个例级检索 R@1 仅 $8.96\%$）。
+    \item \textbf{细胞核形态学保真度与生物区室染液特异性}：复用 Cellpose 实例分割掩膜与 \texttt{regionprops} 提取单核平均面积（Area）、偏心率（Eccentricity）和坚实度（Solidity），并利用核掩膜划分“细胞核内区域”与“核外间质区域”，经固定 Ruifrok 反卷积计算核内苏木精平均光密度（Nuc-H OD）与间质伊红平均光密度（Stroma-E OD）。注：\texttt{gt\_nuclei\_instances\_256.npz} 中 4 例稀疏肾脏真值切片因自适配核径产生超大合并团块，故核面积同时汇报抗异常值 Spearman 秩相关 $r_s$（表~\ref{tab:downstream_bio}，联合有效检出集 $N \le 476$）。结果显示：在 0-shot 阶段，未经色调校准的 \methodname{} 与 \texttt{BaseFlow} 间质伊红相关性均为负（$r=-0.1047$ 与 $-0.2015$）；仅施加免训练 \texttt{halfOD} 即可将 \methodname{} 间质伊红 $r$ 拉升至 $+0.5511$；20-shot \texttt{SRA} 后，\methodname{} 的核内苏木精相关性（$r=\mathbf{0.8306}$，MAE $\mathbf{0.0874}$）、间质伊红相关性（$r=\mathbf{0.9473}$，MAE $\mathbf{0.1102}$）、坚实度相关性（$r=\mathbf{0.6467}$）与偏心率误差（MAE $\mathbf{0.0297}$）均优于同协议 \texttt{BaseFlow} 及全部经典 DG 基线，量化证实染色精确定位到对应细胞区室而非全图泛染。
+\end{enumerate}
+
+\begin{table*}[!t]
+\centering
+\caption{独立病理多模态基础模型（PLIP \& CONCH，严格禁用 UNI）全四器官 $N=480$ 语义检索与器官分类验证}\label{tab:downstream_vlm}
+\footnotesize\setlength{\tabcolsep}{3.4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l|cccc|cccc}
+\toprule
+\multirow{2}{*}{模型 / 阶段} & \multicolumn{4}{c|}{\texttt{PLIP (vinid/plip)}} & \multicolumn{4}{c}{\texttt{CONCH (conch\_ViT-B-16)}} \\
+& CosSim$\uparrow$ & Ret-120 R@1/MRR$\uparrow$ & Ret-480 R@1/MRR$\uparrow$ & LinAcc$\uparrow$ & CosSim$\uparrow$ & Ret-120 R@1/MRR$\uparrow$ & Ret-480 R@1/MRR$\uparrow$ & LinAcc / ZS-Text$\uparrow$ \\
+\midrule
+真值上界（GT H\&E） & 1.0000 & 100.0\% / 1.0000 & 100.0\% / 1.0000 & 100.00\% & 1.0000 & 100.0\% / 1.0000 & 100.0\% / 1.0000 & 100.00\% / 84.79\% \\
+\midrule
+\texttt{UniFlow (0-shot)} & 0.8705 & 13.75\% / 0.2331 & 10.62\% / 0.1836 & 70.21\% & 0.6539 & 9.17\% / 0.1875 & 8.33\% / 0.1733 & 88.96\% / 66.88\% \\
+\texttt{UniFlow (0-shot + halfOD)} & 0.8598 & 15.21\% / 0.2412 & 13.33\% / 0.2106 & 89.17\% & 0.6840 & 11.04\% / 0.1998 & 10.42\% / 0.1858 & 91.04\% / 64.17\% \\
+\texttt{BaseFlow (0-shot)} & 0.8546 & 12.09\% / 0.2143 & 8.54\% / 0.1588 & 60.42\% & 0.6383 & 7.91\% / 0.1655 & 7.08\% / 0.1485 & 86.25\% / 64.58\% \\
+\texttt{BaseFlow (0-shot + halfOD)} & 0.8459 & 10.83\% / 0.2034 & 9.58\% / 0.1742 & 79.58\% & 0.6665 & 8.54\% / 0.1715 & 7.71\% / 0.1552 & 88.54\% / 60.00\% \\
+\midrule
+\texttt{BaseFlow (20-shot)} & 0.8802 & 17.71\% / 0.2775 & 17.29\% / 0.2720 & 98.96\% & 0.7500 & 12.50\% / 0.2362 & 11.88\% / 0.2292 & 98.96\% / 70.62\% \\
+\texttt{MixStyle (20-shot)} & 0.8793 & 16.04\% / 0.2674 & 16.04\% / 0.2635 & 98.75\% & 0.7473 & 11.67\% / 0.2261 & 11.46\% / 0.2221 & 99.38\% / 72.92\% \\
+\texttt{StainAug (20-shot)} & 0.8798 & 18.12\% / 0.2810 & 17.92\% / 0.2760 & 98.54\% & 0.7484 & 12.09\% / 0.2354 & 11.88\% / 0.2297 & 99.17\% / 71.88\% \\
+\texttt{DANN (20-shot)} & 0.8579 & 12.29\% / 0.2227 & 11.88\% / 0.2147 & 98.12\% & 0.6870 & 9.17\% / 0.1970 & 8.96\% / 0.1886 & 96.88\% / \textbf{79.17\%} \\
+\texttt{MLDG (20-shot)} & 0.8799 & 16.67\% / 0.2700 & 16.67\% / 0.2661 & 98.96\% & 0.7514 & 11.67\% / 0.2292 & 11.67\% / 0.2254 & 98.54\% / 70.21\% \\
+\texttt{Pix2Pix / CycleGAN / UNIStainNet} & -- & -- & -- & -- & -- & -- & -- & -- \\
+\texttt{CUT / I2SB (20-shot)} & -- & -- & -- & -- & -- & -- & -- & -- \\
+\textbf{\methodname{} (20-shot)} & \textbf{0.8891} & \textbf{22.08\%} / \textbf{0.3248} & \textbf{22.08\%} / \textbf{0.3228} & \textbf{99.38\%} & \textbf{0.7746} & \textbf{15.21\%} / \textbf{0.2786} & \textbf{15.00\%} / \textbf{0.2748} & \textbf{99.79\%} / 77.29\% \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+\begin{table}[!t]
+\centering
+\caption{细胞核形态学保真度与生物区室染液特异性（Cellpose + \texttt{regionprops} + Ruifrok OD，$N=480$）}\label{tab:downstream_bio}
+\footnotesize\setlength{\tabcolsep}{2.8pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+模型 / 阶段 & 联合有效样本 & Area ($r_s\uparrow$ / MAE$\downarrow$) & Eccentricity ($r\uparrow$ / MAE$\downarrow$) & Solidity ($r\uparrow$ / MAE$\downarrow$) & Nuc-H OD ($r\uparrow$ / MAE$\downarrow$) & Stroma-E OD ($r\uparrow$ / MAE$\downarrow$) \\
+\midrule
+\texttt{UniFlow (0-shot)} & 471/476 & 0.8734 / 38.34 & 0.8540 / 0.0324 & 0.4992 / 0.0078 & 0.5604 / 0.1420 & -0.1047 / 0.4963 \\
+\texttt{UniFlow (0-shot + halfOD)} & 473/476 & 0.8838 / 36.87 & 0.8724 / 0.0324 & 0.5809 / 0.0071 & 0.6267 / 0.1350 & 0.5511 / 0.3179 \\
+\texttt{BaseFlow (0-shot)} & 459/476 & 0.8583 / 36.90 & 0.7824 / 0.0368 & 0.4385 / 0.0081 & 0.4247 / 0.1619 & -0.2015 / 0.5871 \\
+\texttt{BaseFlow (0-shot + halfOD)} & 464/476 & 0.8545 / 36.53 & 0.8147 / 0.0356 & 0.4780 / 0.0077 & 0.5485 / 0.1445 & 0.3376 / 0.4355 \\
+\midrule
+\texttt{BaseFlow (20-shot)} & 472/476 & 0.9114 / 37.29 & 0.8924 / 0.0314 & 0.6174 / \textbf{0.0059} & 0.7817 / 0.1001 & 0.9131 / 0.1315 \\
+\texttt{MixStyle (20-shot)} & 476/476 & \textbf{0.9147} / 37.80 & 0.8943 / 0.0308 & 0.6401 / 0.0062 & 0.7660 / 0.1037 & 0.9224 / 0.1289 \\
+\texttt{StainAug (20-shot)} & 475/476 & 0.8984 / 37.68 & 0.8904 / 0.0308 & 0.6412 / 0.0062 & 0.7718 / 0.1019 & 0.9248 / 0.1256 \\
+\texttt{DANN (20-shot)} & 448/476 & 0.8842 / \textbf{33.24} & 0.8762 / 0.0310 & 0.3950 / 0.0080 & 0.6904 / 0.1164 & 0.8675 / 0.1708 \\
+\texttt{MLDG (20-shot)} & 476/476 & 0.9074 / 37.53 & \textbf{0.9012} / 0.0311 & 0.5988 / 0.0065 & 0.7737 / 0.1021 & 0.9136 / 0.1322 \\
+\texttt{Pix2Pix / CycleGAN / UNIStainNet} & -- & -- & -- & -- & -- & -- \\
+\texttt{CUT / I2SB (20-shot)} & -- & -- & -- & -- & -- & -- \\
+\textbf{\methodname{} (20-shot)} & 475/476 & 0.9039 / 36.92 & 0.8993 / \textbf{0.0297} & \textbf{0.6467} / 0.0063 & \textbf{0.8306} / \textbf{0.0874} & \textbf{0.9473} / \textbf{0.1102} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
 \section{讨论与局限性}
 \subsection{跨器官虚拟染色的先验引导与少样本边界}
 三阶段实证勾勒出虚拟染色跨器官部署的能力边界：冻结基础模型的空间先验虽能在零样本下托底器官形态，却无法凭空推断跨器官非线性染色统计分布；基于 5 张参考切片的 \texttt{halfOD} 校准在大幅纠正高色偏器官色调的同时，于染色相近器官存在全局过校准风险（表~\ref{tab:halfod_alpha} 证实 $\alpha=0.50$ 的阻尼必要性）；引入极少量目标配对微调与 SRA 染色增广源域回放，才能同步保证高像素结构精度与源域抗遗忘稳定性。
